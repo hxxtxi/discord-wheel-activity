@@ -74,7 +74,9 @@
                 <h1 class="text-3xl font-bold text-white mb-2">Колесо Удачи</h1>
                 
                 <div class="relative w-full max-w-[500px] aspect-square mx-auto">
-                    <!-- Точка по центру убрана -->
+                    <!-- [НОВЫЙ КОД] Вернули центральную "заглушку", но со смайликом черепа -->
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl z-20" style="filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));">💀</div>
+                    
                     <div class="absolute -top-1 left-1/2 -translate-x-1/2 text-4xl" style="z-index: 10;">🔻</div>
                     
                     <canvas id="wheel" class="w-full h-full wheel-shadow"></canvas>
@@ -137,6 +139,12 @@
                         <input type="number" id="spin-duration" class="discord-input w-full p-2 rounded-md" value="10" min="1" max="360">
                     </div>
 
+                    <!-- [НОВЫЙ КОД] Добавлен слайдер скорости вращения -->
+                    <div>
+                        <label for="spin-speed" class="block text-sm font-bold mb-1">Скорость вращения</label>
+                        <input type="range" id="spin-speed" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" value="100" min="20" max="300">
+                    </div>
+
                     <hr class="border-gray-600">
 
                     <div id="manual-controls" class="space-y-4">
@@ -181,6 +189,7 @@
         const popupSubtitle = document.getElementById('popup-subtitle');
         const closePopupBtn = document.getElementById('close-popup');
         const spinDurationInput = document.getElementById('spin-duration');
+        const spinSpeedInput = document.getElementById('spin-speed'); // [НОВЫЙ КОД]
         const connectionStatus = document.getElementById('connection-status');
         const addModeToggle = document.getElementById('add-mode-toggle');
         const gameModeToggle = document.getElementById('game-mode-toggle');
@@ -242,21 +251,15 @@
                 ctx.fillStyle = p.color;
                 ctx.fill();
 
-                // [НОВЫЙ КОД] Рисуем разделительные линии между секторами
-                ctx.strokeStyle = 'var(--background-primary)'; // Цвет фона для "разрыва"
-                ctx.lineWidth = 3; // Толщина линии
-                ctx.stroke(); // Рисуем обводку (разделитель)
+                // [ИЗМЕНЕНО] Рисуем разделительные линии, только если участников больше одного
+                if (participants.length > 1) {
+                    ctx.strokeStyle = 'var(--background-primary)'; // Цвет фона для "разрыва"
+                    ctx.lineWidth = 3; // Толщина линии
+                    ctx.stroke(); // Рисуем обводку (разделитель)
+                }
 
-                ctx.save();
-                ctx.fillStyle = 'white';
-                ctx.font = `bold ${Math.max(10, size * 0.028)}px Inter`;
-                const textAngle = startAngle + sliceAngle / 2 + Math.PI / 2;
-                ctx.translate(center, center);
-                ctx.rotate(textAngle);
-                ctx.textAlign = 'center';
-                const displayName = p.name.length > 10 ? p.name.substring(0, 8) + '...' : p.name;
-                ctx.fillText(displayName, 0, -center * 0.7);
-                ctx.restore();
+                // [ИЗМЕНЕНО] Убран код, который рисовал имена на секторах
+                
                 startAngle += sliceAngle;
             });
         }
@@ -317,7 +320,13 @@
             isSpinning = true;
             spinBtn.disabled = true;
             const duration = (parseInt(spinDurationInput.value, 10) || 10) * 1000;
-            const spinAngle = Math.random() * 10 + 10;
+            
+            // [ИЗМЕНЕНО] Угол вращения теперь зависит от слайдера скорости
+            // Делим на 10, чтобы получить множитель (от 2 до 30)
+            const speedMultiplier = (parseInt(spinSpeedInput.value, 10) || 100) / 10; 
+            // К мин. 10 радиан (около 1.5 оборота) добавляем случайное число, зависящее от скорости
+            const spinAngle = (Math.random() * speedMultiplier) + 10; 
+            
             const startTimestamp = performance.now();
             function animate(currentTime) {
                 const elapsedTime = currentTime - startTimestamp;
@@ -335,6 +344,8 @@
                     for (const p of participants) {
                         const sliceAngle = (p.amount / totalBet) * 2 * Math.PI;
                         if (pointerAngle >= accumulatedAngle && pointerAngle < accumulatedAngle + sliceAngle) {
+                            // [ИЗМЕНЕНО] Логика определения победителя/проигравшего (result) осталась та же
+                            // 'result' - это тот, на кого указывает стрелка
                             handleSpinResult(p);
                             break;
                         }
@@ -346,10 +357,17 @@
         }
 
         function handleSpinResult(result) {
+            // 'result' - это участник, на которого указывает стрелка
+
+            // [ИЗМЕНЕНО] Логика для режима "Классика"
             if (gameMode === 'classic') {
+                // В "Классике" тот, на кого указывает стрелка - ПОБЕЖДАЕТ
                 showResultPopup('Победитель!', `🎉 ${result.name} 🎉`, 'Поздравляем с победой!');
                 isSpinning = false; // Позволяем крутить снова
+            
+            // [ИЗМЕНЕНО] Логика для режима "На выбывание"
             } else if (gameMode === 'elimination') {
+                // В "На выбывание" тот, на кого указывает стрелка - ПРОИГРЫВАЕТ (выбывает)
                 
                 if (participants.length > 2) {
                     // Еще есть кому выбывать
@@ -378,7 +396,7 @@
                     const winner = participants.find(p => p.name !== result.name);
                     showResultPopup('Победитель!', `🏆 ${winner.name} 🏆`, 'Выживший в этой битве!');
                     
-                    // [ИЗМЕНЕНО] Логика для офлайн-режима: удаляем проигравшего
+                    // [ИЗМЕНЕНО] Логика для офлайн-режима: удаляем проигравшего ('result')
                     if (isOfflineMode) {
                          const indexToRemove = participants.findIndex(p => p.name === result.name);
                         if (indexToRemove !== -1) {
