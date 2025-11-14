@@ -7,21 +7,28 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Используем шрифт Inter, похожий на системный шрифт Apple (San Francisco) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             /* Apple Dark Mode Palette */
-            --bg-primary: #1C1C1E;    /* Почти черный, фон */
-            --bg-secondary: #2C2C2E;  /* Серый, фон панелей */
-            --bg-tertiary: #3A3A3C;   /* Светлее серый, для инпутов */
+            --bg-primary: #000000;
+            --bg-secondary: #1C1C1E; /* Панели */
+            --bg-tertiary: #2C2C2E; /* Внутренние элементы */
+            --bg-tertiary-hover: #3A3A3C;
+            --bg-blur: rgba(28, 28, 30, 0.7); /* Для эффекта стекла */
+            
             --text-primary: #FFFFFF;
-            --text-secondary: #EBEBF599; /* 60% белый */
-            --text-tertiary: #EBEBF54D;  /* 30% белый */
-            --accent-blue: #0A84FF;
-            --accent-green: #30D158;
-            --accent-red: #FF453A;
-            --divider: rgba(84, 84, 88, 0.65); /* Разделитель */
+            --text-secondary: #EBEBF599; /* 60% opacity white */
+            --text-tertiary: #EBEBF54D; /* 30% opacity white */
+            
+            --brand-blue: #0A84FF;
+            --brand-blue-hover: #369DFF;
+            --brand-green: #30D158;
+            --brand-green-hover: #50E072;
+            --brand-red: #FF453A;
+            --brand-yellow: #FFD60A;
+            
+            --divider: rgba(84, 84, 88, 0.65);
         }
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
@@ -31,144 +38,211 @@
             -moz-osx-font-smoothing: grayscale;
         }
         
-        /* Эффект "Frosted Glass" (Размытое стекло) для панелей */
-        .apple-panel { 
-            background-color: rgba(44, 44, 46, 0.75); /* var(--bg-secondary) с 75% прозрачностью */
-            backdrop-filter: blur(12px) saturate(180%);
-            -webkit-backdrop-filter: blur(12px) saturate(180%);
-            border: 1px solid rgba(84, 84, 88, 0.5); /* Полупрозрачная граница */
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        /* Стеклянные панели в стиле Apple */
+        .apple-panel {
+            background-color: var(--bg-blur);
+            backdrop-filter: blur(12px) saturate(1.8);
+            border: 1px solid rgba(84, 84, 88, 0.5); /* Граница для стекла */
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         
-        /* Стили инпутов */
-        .apple-input { 
-            background-color: var(--bg-tertiary); 
-            border: 1px solid var(--divider); 
-            color: var(--text-primary); 
-            caret-color: var(--accent-blue);
-        }
-        .apple-input::placeholder { color: var(--text-tertiary); }
-        .apple-input:focus { 
-            outline: none; 
-            border-color: var(--accent-blue); 
-            box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.3);
-        }
-        
-        /* Стили кнопок */
-        .apple-button-brand { 
-            background-color: var(--accent-blue); 
-            color: var(--text-primary); 
-            font-weight: 600;
-            transition: transform 0.1s cubic-bezier(0.3, 0, 0.5, 1), background-color 0.2s;
-        }
-        .apple-button-brand:hover { background-color: #3895ff; }
-        .apple-button-brand:active { transform: scale(0.96); }
-        
-        .apple-button-spin { 
-            background-color: var(--accent-green); 
-            color: #1C1C1E; /* Темный текст на яркой кнопке */
-            font-weight: 700;
-            box-shadow: 0 4px 10px rgba(48, 209, 88, 0.3);
-            transition: transform 0.1s cubic-bezier(0.3, 0, 0.5, 1), background-color 0.2s;
-        }
-        .apple-button-spin:hover { background-color: #4be06e; }
-        .apple-button-spin:active { transform: scale(0.96); }
-        .apple-button-spin:disabled {
+        /* Инпуты */
+        .apple-input {
             background-color: var(--bg-tertiary);
-            color: var(--text-tertiary);
-            box-shadow: none;
+            border: 1px solid var(--divider);
+            color: var(--text-primary);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 15px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .apple-input:focus {
+            outline: none;
+            border-color: var(--brand-blue);
+            box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.3);
+        }
+
+        /* Кнопки */
+        .apple-button {
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 10px 16px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+        .apple-button:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
         }
         
-        /* Попап */
-        .winner-popup { 
-            background-color: rgba(10, 10, 10, 0.4); 
-            backdrop-filter: blur(8px) saturate(150%);
-            -webkit-backdrop-filter: blur(8px) saturate(150%);
+        .apple-button-brand {
+            background-color: var(--brand-blue);
+            color: var(--text-primary);
+        }
+        .apple-button-brand:not(:disabled):hover {
+            background-color: var(--brand-blue-hover);
+        }
+        
+        .apple-button-spin {
+            background-color: var(--brand-green);
+            color: var(--text-primary);
+            font-size: 18px;
+            padding: 12px 24px;
+            box-shadow: 0 0 15px rgba(48, 209, 88, 0.3);
+        }
+        .apple-button-spin:not(:disabled):hover {
+            background-color: var(--brand-green-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(48, 209, 88, 0.4);
+        }
+        .apple-button-spin:not(:disabled):active {
+            transform: translateY(0);
         }
 
-        /* Тень для колеса */
-        .wheel-shadow {
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.25));
+        /* Переключатель в стиле iOS */
+        .apple-switch {
+            position: relative;
+            display: inline-block;
+            width: 51px;
+            height: 31px;
+        }
+        .apple-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .apple-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-tertiary);
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .apple-slider:before {
+            position: absolute;
+            content: "";
+            height: 27px;
+            width: 27px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .apple-slider {
+            background-color: var(--brand-blue);
+        }
+        input:checked + .apple-slider:before {
+            transform: translateX(20px);
         }
 
-        /* Скроллбар */
+        /* Кастомный скроллбар */
         .custom-scrollbar::-webkit-scrollbar { width: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: var(--bg-secondary); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4a4a4c; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--bg-tertiary-hover); border-radius: 4px; }
         
-        /* iOS-style Переключатель */
-        .toggle-bg {
-            background-color: var(--bg-tertiary);
-            transition: background-color 0.2s ease-in-out;
+        /* Слайдер */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 5px;
+            outline: none;
         }
-        .toggle:checked + .toggle-bg {
-            background-color: var(--accent-blue);
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 1px solid var(--divider);
         }
-        .toggle:checked + .toggle-bg .toggle-dot {
-            transform: translateX(100%);
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 1px solid var(--divider);
         }
-        .toggle-dot {
-            background-color: white;
-            transition: transform 0.2s ease-in-out;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-        
-        /* Скрытие "стрелок" у инпута с числом */
+
+        /* Инпуты (убрать стрелки) */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none; 
             margin: 0; 
         }
-        input[type=number] { -moz-appearance: textfield; }
-
+        input[type=number] { 
+            -moz-appearance: textfield; 
+        }
+        
+        /* Попап */
+        .winner-popup { 
+            background-color: rgba(0, 0, 0, 0.7); 
+            backdrop-filter: blur(10px); 
+        }
+        .popup-panel {
+            background-color: var(--bg-blur);
+            border: 1px solid rgba(84, 84, 88, 0.5);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen w-full h-full p-4 box-border">
-    
-    <div class="w-full max-w-7xl mx-auto h-full">
-        <!-- Адаптивная сетка: 1 колонка на мобилках, 4 на десктопе -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start h-full">
+    <div class="w-full max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
             
-            <!-- Панель Участников (Левая) -->
-            <div class="apple-panel p-4 rounded-2xl shadow-lg order-2 lg:order-1 h-full lg:max-h-[85vh]">
+            <!-- Левая колонка: Участники -->
+            <div classs="apple-panel p-4 rounded-lg shadow-lg order-2 lg:order-1 h-full">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-semibold text-white">Участники</h2>
-                    <button id="clear-all-btn" class="text-sm text-blue-500 hover:text-blue-400 active:scale-95 transition-all">Удалить всех</button>
+                    <button id="clear-participants" class="text-sm text-red-500 hover:text-red-400 font-medium">Удалить всех</button>
                 </div>
-                <div id="participants-cards-list" class="space-y-3 max-h-[40vh] lg:max-h-[calc(85vh-80px)] overflow-y-auto custom-scrollbar pr-2">
-                    <p class="text-center pt-8">Участников пока нет.</p>
+                <div id="participants-cards-list" class="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                    <p class="text-center pt-8 text-sm text-gray-400">Участников пока нет.</p>
                 </div>
             </div>
-
-            <!-- Центральная Колонка (Колесо) -->
-            <div class="flex flex-col items-center justify-center order-1 lg:order-2 lg:col-span-2 h-full flex-grow">
+            
+            <!-- Центр: Колесо -->
+            <div class="flex flex-col items-center justify-center order-1 lg:order-2 lg:col-span-2">
                 <h1 class="text-3xl font-bold text-white mb-2">Колесо Удачи</h1>
-                <p id="wheel-subtitle" class="text-lg text-gray-400 -mt-2 mb-2 transition-opacity duration-300 opacity-0">Добавьте участников</p>
+                <p id="wheel-subtitle" class="text-base text-gray-400 mb-4 hidden">Добавьте участников, чтобы начать</p>
                 
-                <div class="relative w-full max-w-[500px] aspect-square mx-auto">
-                    <!-- Череп 💀 -->
-                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl z-20" style="filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));">💀</div>
+                <div id="canvas-container" class="relative w-full max-w-[500px] aspect-square mx-auto">
+                    <!-- Череп в центре -->
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl z-20 opacity-90">💀</div>
                     <!-- Стрелка-указатель -->
-                    <div class="absolute -top-1 left-1/2 -translate-x-1/2 text-4xl z-10" style="filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));">🔻</div>
-                    <!-- Канвас -->
+                    <div class="absolute -top-1 left-1/2 -translate-x-1/2 text-4xl" style="z-index: 10;">🔻</div>
+                    <!-- Сам холст колеса -->
                     <canvas id="wheel" class="w-full h-full wheel-shadow"></canvas>
                 </div>
                 
-                <button id="spin-button" classs="apple-button-spin mt-6 font-bold py-3 px-10 rounded-lg text-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                <button id="spin-button" class="apple-button apple-button-spin mt-6 font-bold py-3 px-8 rounded-lg text-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
                     Крутить!
                 </button>
             </div>
-
-            <!-- Панель Настроек (Правая) -->
-            <div class="apple-panel p-4 rounded-2xl shadow-lg order-3 lg:order-3 h-full lg:max-h-[85vh]">
+            
+            <!-- Правая колонка: Настройки -->
+            <div class="apple-panel p-4 rounded-lg shadow-lg order-3 lg:order-3 h-full">
                 <h2 class="text-xl font-semibold text-white mb-4">Настройки Игры</h2>
                 
                 <!-- Статус сервера -->
                 <div class="mb-4">
                     <div class="flex items-center justify-between">
-                        <label class="text-sm font-semibold text-white">Статус сервера</label>
+                        <label class="text-sm font-bold text-gray-300">Статус сервера</label>
                         <div id="connection-status" class="text-sm font-bold text-yellow-400 flex items-center">
                             <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -178,109 +252,117 @@
                         </div>
                     </div>
                 </div>
-                <hr class="border-[var(--divider)] mb-4">
+                
+                <hr class="border-divider mb-4">
                 
                 <div class="space-y-4">
                     <!-- Режим добавления -->
-                    <div>
-                        <label class="text-sm font-semibold text-white">Режим добавления</label>
-                        <label id="mode-label" for="add-mode-toggle" class="flex items-center justify-between mt-2 opacity-50">
-                            <span class="text-sm">Вручную / Из канала</span>
-                            <div class="relative">
-                                <input type="checkbox" id="add-mode-toggle" class="sr-only toggle" disabled>
-                                <div class="toggle-bg w-11 h-6 rounded-full">
-                                    <div class="toggle-dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full"></div>
-                                </div>
-                            </div>
-                        </label>
-                        <p id="mode-helper" class="text-xs text-gray-500 mt-1">Доступно только в Discord</p>
+                    <div id="add-mode-container" class="hidden">
+                        <label class="text-sm font-bold text-gray-300">Режим добавления</label>
+                        <div class="flex items-center justify-between mt-2">
+                            <span class="text-sm text-gray-400">Вручную</span>
+                            <label class="apple-switch">
+                                <input type="checkbox" id="add-mode-toggle" disabled>
+                                <span class="apple-slider"></span>
+                            </label>
+                            <span class="text-sm">Из канала</span>
+                        </div>
+                        <p id="mode-helper" class="text-xs text-gray-500 mt-2">Доступно только в Discord</p>
                     </div>
 
                     <!-- Режим игры -->
-                     <div>
-                        <label class="text-sm font-semibold text-white">Режим игры</label>
-                        <label for="game-mode-toggle" class="flex items-center justify-between mt-2">
-                            <span class="text-sm">Классика / На выбывание</span>
-                            <div class="relative">
-                                <input type="checkbox" id="game-mode-toggle" class="sr-only toggle">
-                                <div class="toggle-bg w-11 h-6 rounded-full">
-                                    <div class="toggle-dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full"></div>
-                                </div>
-                            </div>
-                        </label>
+                    <div>
+                        <label class="text-sm font-bold text-gray-300">Режим игры</label>
+                        <div class="flex items-center justify-between mt-2">
+                            <span class="text-sm text-gray-400">Классика</span>
+                            <label class="apple-switch">
+                                <input type="checkbox" id="game-mode-toggle">
+                                <span class="apple-slider"></span>
+                            </label>
+                            <span class="text-sm">На выбывание</span>
+                        </div>
                     </div>
 
                     <!-- Время вращения -->
                     <div>
-                        <label for="spin-duration" class="block text-sm font-semibold text-white mb-2">Время вращения (сек)</label>
-                        <input type="number" id="spin-duration" class="apple-input w-full p-2 rounded-lg" value="10" min="1" max="360">
-                    </div>
-                    
-                    <!-- Скорость вращения -->
-                    <div>
-                        <label for="spin-speed" class="block text-sm font-semibold text-white mb-2">Скорость вращения</label>
-                        <input type="range" id="spin-speed" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" min="10" max="100" value="50">
+                        <label for="spin-duration" class="block text-sm font-bold text-gray-300 mb-2">Время вращения (сек)</label>
+                        <input type="number" id="spin-duration" class="apple-input w-full" value="10" min="1" max="360">
                     </div>
 
-                    <hr class="border-[var(--divider)] my-4">
+                    <!-- Скорость вращения -->
+                    <div>
+                        <label for="spin-speed" class="block text-sm font-bold text-gray-300 mb-2">Скорость вращения</label>
+                        <input type="range" id="spin-speed" min="1" max="10" value="5" class="w-full">
+                    </div>
+                    
+                    <hr class="border-divider">
 
                     <!-- Панель ручного управления -->
                     <div id="manual-controls" class="space-y-4">
-                        <label class="text-sm font-semibold text-white">Добавить участника</label>
-                        <input type="text" id="name" class="apple-input w-full p-2 rounded-lg" placeholder="Имя участника">
-                        <input type="number" id="bet" class="apple-input w-full p-2 rounded-lg" placeholder="Сумма ставки" min="1">
-                        <button id="add-participant" class="apple-button-brand w-full py-2 px-4 rounded-lg">Добавить</button>
+                        <label class="text-sm font-bold text-gray-300">Добавить участника</label>
+                        <input type="text" id="name" class="apple-input w-full" placeholder="Имя участника">
+                        <input type="number" id="bet" class="apple-input w-full" placeholder="Сумма ставки" min="1">
+                        <button id="add-participant" class="apple-button apple-button-brand w-full font-bold">Добавить</button>
                     </div>
 
                     <!-- Панель автоматического управления -->
                     <div id="auto-controls" class="hidden space-y-4">
-                        <label class="text-sm font-semibold text-white">Загрузить из канала</label>
-                        <input type="number" id="auto-bet" class="apple-input w-full p-2 rounded-lg" value="100" min="1" placeholder="Ставка для всех">
-                        <button id="load-voice-participants" class="apple-button-brand w-full py-2 px-4 rounded-lg">Загрузить</button>
+                        <label class="text-sm font-bold text-gray-300">Загрузить из канала</label>
+                        <input type="number" id="auto-bet" class="apple-input w-full" value="100" min="1" placeholder="Ставка для всех">
+                        <button id="load-voice-participants" class="apple-button apple-button-brand w-full font-bold">Загрузить</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Попап Победителя -->
+    <!-- Попап победителя -->
     <div id="result-popup" class="fixed inset-0 winner-popup flex items-center justify-center hidden z-50 p-4">
-        <div class="apple-panel p-8 rounded-2xl shadow-xl text-center transform transition-all scale-95 opacity-0 max-w-sm w-full">
-            <h2 id="popup-title" class="text-2xl font-bold text-gray-300 mb-2"></h2>
+        <div class="popup-panel p-8 rounded-lg shadow-xl text-center transform transition-all scale-95 opacity-0 max-w-md w-full">
+            <h2 id="popup-title" class="text-2xl font-bold text-gray-200 mb-2"></h2>
             <p class="text-5xl font-bold text-white mb-4" id="popup-name"></p>
             <p id="popup-subtitle" class="text-lg text-gray-400"></p>
-            <button id="close-popup" class="mt-6 apple-button-brand font-bold py-2 px-6 rounded-lg">Закрыть</button>
+            <button id="close-popup" class="mt-6 apple-button apple-button-brand font-bold py-2 px-6">Закрыть</button>
         </div>
     </div>
 
     <script type="module">
+        // ----- SDK и URL -----
         import { DiscordSDK } from 'https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@latest/+esm';
         
-        // ЗАМЕНИТЕ НА ВАШ URL СЕРВЕРА (Glitch, Replit и т.д.)
-        // WSS://<your-project-name>.glitch.me
+        // !!! ЗАМЕНИТЕ НА ВАШ URL СЕРВЕРА GLITCH ИЛИ REPLIT !!!
         const backendUrl = 'WSS_URL_ВАШЕГО_СЕРВЕРА_GLITCH'; 
+        const clientId = '1292015094247264307'; // !!! ЗАМЕНИТЕ НА ВАШ CLIENT ID !!!
+        
         let ws;
+        let discordSdk;
 
-        // --- UI Elements ---
+        // ----- UI Элементы -----
         const canvas = document.getElementById('wheel');
-        const canvasContainer = canvas.parentElement;
         const ctx = canvas.getContext('2d');
+        const canvasContainer = document.getElementById('canvas-container');
         const spinBtn = document.getElementById('spin-button');
         const participantsCardsList = document.getElementById('participants-cards-list');
-        const clearAllBtn = document.getElementById('clear-all-btn'); 
         const wheelSubtitle = document.getElementById('wheel-subtitle');
+        
+        // Попап
         const resultPopup = document.getElementById('result-popup');
         const popupTitle = document.getElementById('popup-title');
         const popupName = document.getElementById('popup-name');
         const popupSubtitle = document.getElementById('popup-subtitle');
         const closePopupBtn = document.getElementById('close-popup');
-        const spinDurationInput = document.getElementById('spin-duration');
-        const spinSpeedInput = document.getElementById('spin-speed');
+        
+        // Статус
         const connectionStatus = document.getElementById('connection-status');
-
-        // --- Controls ---
+        
+        // Настройки
+        const addModeContainer = document.getElementById('add-mode-container');
         const addModeToggle = document.getElementById('add-mode-toggle');
         const gameModeToggle = document.getElementById('game-mode-toggle');
+        const spinDurationInput = document.getElementById('spin-duration');
+        const spinSpeedInput = document.getElementById('spin-speed');
+        
+        // Управление
         const manualControls = document.getElementById('manual-controls');
         const autoControls = document.getElementById('auto-controls');
         const nameInput = document.getElementById('name');
@@ -288,103 +370,97 @@
         const addParticipantBtn = document.getElementById('add-participant');
         const autoBetInput = document.getElementById('auto-bet');
         const loadVoiceParticipantsBtn = document.getElementById('load-voice-participants');
+        const clearParticipantsBtn = document.getElementById('clear-participants');
 
-        // --- State ---
+        // ----- Состояние -----
         let participants = [];
         let isSpinning = false;
-        let voiceChannelMembers = [];
         let gameMode = 'classic'; // 'classic' or 'elimination'
-        let offlineMode = false; // Флаг для офлайн-тестирования
+        let voiceChannelMembers = [];
         
-        // [ФИКС] Читаем CSS-переменную для использования в JS
-        const style = getComputedStyle(document.body);
-        const bgPrimaryColor = style.getPropertyValue('--bg-primary').trim();
+        // Цвета (Базовые + Градиент)
+        const baseColors = ['#0A84FF', '#FF453A', '#30D158', '#FF9F0A', '#FFD60A', '#AF52DE', '#64D2FF', '#FF4F0A'];
         
-        // Базовые цвета (яркие, в стиле Apple)
-        const baseColors = ['#0A84FF', '#FF453A', '#30D158', '#FF9F0A', '#AF52DE', '#FFD60A', '#5E5CE6', '#64D2FF', '#FF2D55'];
+        // Читаем CSS-переменные для отрисовки
+        const computedStyle = getComputedStyle(document.documentElement);
+        let bgPrimaryColor = computedStyle.getPropertyValue('--bg-primary').trim() || '#000000';
+        let dividerColor = computedStyle.getPropertyValue('--divider').trim() || '#3C3C3E';
 
-        // --- Canvas & Drawing ---
+        // ----- Инициализация -----
+        resizeCanvas();
+        window.addEventListener('resize', debounce(resizeCanvas, 100));
+        setupDiscordSdk();
+        connectToBackend();
 
-        let resizeTimeout;
-        function resizeCanvas() {
-            // "Debounce" для resize, чтобы не вызывать слишком часто
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                const size = Math.floor(canvasContainer.clientWidth);
-                
-                // Защита от нулевого или отрицательного размера
-                if (size <= 0) return;
-
-                // Устанавливаем "физический" размер канваса (разрешение)
-                canvas.width = size;
-                canvas.height = size;
-                
-                // Снова рисуем колесо в новом разрешении
-                drawWheel();
-            }, 100);
-        }
-
+        // ----- Логика Отрисовки Колеса -----
+        
         function drawWheel() {
-            // Управление подзаголовком
-            if (participants.length === 0) {
-                wheelSubtitle.classList.remove('opacity-0');
-            } else {
-                wheelSubtitle.classList.add('opacity-0');
-            }
-            
             const size = canvas.width;
             
-            // Защита от ошибки 'Negative radius' при слишком маленьком окне
-            if (size < 20) return; 
+            // Защита от ошибки 'Negative radius' при сворачивании
+            if (size <= 20) return; 
 
             const center = size / 2;
-            let startAngle = 0;
             
-            // Очищаем и настраиваем холст
             ctx.clearRect(0, 0, size, size);
-            ctx.save(); // Сохраняем состояние холста (до поворота)
             
-            // [ФИКС v6] Поворачиваем холст на -90 градусов, чтобы 0 был "наверху"
+            // Главный фикс (v6): поворачиваем холст, а не CSS
+            ctx.save();
             ctx.translate(center, center);
-            ctx.rotate(-Math.PI / 2);
+            ctx.rotate(-Math.PI / 2); // Поворачиваем на -90 градусов
             ctx.translate(-center, -center);
 
-            // Если участников нет, рисуем "пустое" колесо
             if (participants.length === 0) {
+                wheelSubtitle.classList.remove('hidden');
                 ctx.beginPath();
                 ctx.arc(center, center, center - 5, 0, 2 * Math.PI);
-                ctx.fillStyle = '#4a4d53'; // Темно-серый заполнитель
+                ctx.fillStyle = '#2C2C2E'; // Цвет пустого колеса
                 ctx.fill();
-                ctx.restore(); // [ФИКС] Восстанавливаем холст
+                ctx.restore(); // Возвращаем холст
                 return;
             }
+            
+            wheelSubtitle.classList.add('hidden');
+            let startAngle = 0;
 
-            // [ФИКС v5] Считаем totalBet/Weight прямо здесь, чтобы избежать рассинхрона
-            let totalWeight = 0;
-            let weights = [];
-
+            // Определяем веса в зависимости от режима
+            let weightedParticipants = [];
+            
             if (gameMode === 'classic') {
-                totalWeight = participants.reduce((sum, p) => sum + p.amount, 0);
-                weights = participants.map(p => p.amount);
-            } else {
-                // "Инвертированный" режим
                 const totalBet = participants.reduce((sum, p) => sum + p.amount, 0);
                 if (totalBet > 0) {
-                    weights = participants.map(p => totalBet / p.amount);
-                    totalWeight = weights.reduce((sum, w) => sum + w, 0);
+                    weightedParticipants = participants.map(p => ({
+                        ...p,
+                        sliceAngle: (p.amount / totalBet) * 2 * Math.PI
+                    }));
+                }
+            } else {
+                // Режим "На выбывание" (инвертированные веса)
+                const totalAmount = participants.reduce((sum, p) => sum + p.amount, 0);
+                if (totalAmount > 0) {
+                    const weights = participants.map(p => ({ ...p, weight: totalAmount / p.amount }));
+                    const totalInverseWeight = weights.reduce((sum, p) => sum + p.weight, 0);
+                    
+                    if(totalInverseWeight > 0) {
+                        weightedParticipants = weights.map(p => ({
+                            ...p,
+                            sliceAngle: (p.weight / totalInverseWeight) * 2 * Math.PI
+                        }));
+                    }
                 }
             }
-
-            if (totalWeight <= 0) {
-                 ctx.restore(); // Восстанавливаем, если что-то пошло не так
-                 return;
+            
+            // Если что-то пошло не так (например, все ставки 0), делим поровну
+            if (weightedParticipants.length === 0 && participants.length > 0) {
+                 weightedParticipants = participants.map(p => ({
+                    ...p,
+                    sliceAngle: (1 / participants.length) * 2 * Math.PI
+                }));
             }
 
             // Рисуем сектора
-            participants.forEach((p, index) => {
-                const sliceAngle = (weights[index] / totalWeight) * 2 * Math.PI;
-                
-                // Сектор
+            weightedParticipants.forEach(p => {
+                const sliceAngle = p.sliceAngle;
                 ctx.beginPath();
                 ctx.moveTo(center, center);
                 ctx.arc(center, center, center - 5, startAngle, startAngle + sliceAngle);
@@ -392,444 +468,370 @@
                 ctx.fillStyle = p.color;
                 ctx.fill();
                 
-                // [ФИКС v3] Разделительная линия (только если > 1 участника)
+                // Рисуем разделители, если участников > 1
                 if (participants.length > 1) {
-                    ctx.strokeStyle = bgPrimaryColor; // [ФИКС] Используем JS-переменную вместо CSS
+                    ctx.strokeStyle = dividerColor; // Используем JS-переменную
                     ctx.lineWidth = 3;
                     ctx.stroke();
                 }
-
+                
                 startAngle += sliceAngle;
             });
             
-            ctx.restore(); // Восстанавливаем холст в исходное состояние (до поворота)
+            ctx.restore(); // Возвращаем холст в исходное состояние
         }
-        
-        // --- UI & State Updates ---
 
         function updateParticipantsCardsList() {
             if (participants.length === 0) {
-                participantsCardsList.innerHTML = '<p class="text-center pt-8 text-gray-500">Участников пока нет.</p>';
+                participantsCardsList.innerHTML = '<p class="text-center pt-8 text-sm text-gray-400">Участников пока нет.</p>';
                 spinBtn.disabled = true;
                 return;
             }
-
+            
             participantsCardsList.innerHTML = '';
             participants.forEach((p, index) => {
                 const card = document.createElement('div');
-                card.className = 'flex items-center p-3 rounded-xl transition-transform transform hover:scale-105';
+                card.className = 'flex items-center p-3 rounded-lg';
                 card.style.backgroundColor = 'var(--bg-tertiary)';
                 
-                // [ФИКС v3] Карточка с цветной точкой, а не рамкой
                 card.innerHTML = `
                     <img src="${p.avatarUrl}" class="w-10 h-10 rounded-full mr-3">
                     <div class="flex-grow min-w-0">
                         <div class="flex items-center">
                             <div class="w-3 h-3 rounded-full mr-2 flex-shrink-0" style="background-color: ${p.color};"></div>
-                            <p class="font-semibold text-white truncate">${p.name}</p>
+                            <p class="font-bold text-white truncate">${p.name}</p>
                         </div>
                         <p class="text-sm text-gray-400">Ставка: ${p.amount}$</p>
                     </div>
-                    <button class="ml-2 text-gray-600 hover:text-red-500 transition-colors" data-index="${index}">✖</button>`;
-                
+                    <button class="ml-2 text-gray-600 hover:text-red-400 font-bold text-lg" data-index="${index}">✖</button>
+                `;
                 participantsCardsList.appendChild(card);
             });
             
-            // Не даем крутить, если < 2 участников ИЛИ идет прокрутка
-            spinBtn.disabled = participants.length < 2 || isSpinning;
+            spinBtn.disabled = isSpinning || participants.length < 2;
         }
 
+        // ----- Логика Вращения (теперь управляется сервером) -----
+
+        function handleSpinClick() {
+            if (isSpinning || participants.length < 2 || !ws || ws.readyState !== WebSocket.OPEN) return;
+            isSpinning = true;
+            spinBtn.disabled = true;
+            // Отправляем команду на сервер. Сервер решит, кто победил.
+            ws.send(JSON.stringify({ type: 'spin' }));
+        }
+
+        function animateSpin(spinAngle, duration) {
+            const startTimestamp = performance.now();
+            
+            function animate(currentTime) {
+                const elapsedTime = currentTime - startTimestamp;
+                const progress = Math.min(elapsedTime / duration, 1);
+                // Плавная анимация (ease-out cubic)
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                const currentAngle = easeProgress * spinAngle;
+                
+                canvas.style.transform = `rotate(${currentAngle}rad)`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    canvas.style.transform = `rotate(${spinAngle}rad)`;
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        function handleSpinResult(winner, finalWinner = false) {
+            let title, name, subtitle;
+            
+            if (finalWinner) {
+                // Финальный победитель в режиме "На выбывание"
+                title = 'Победитель!';
+                name = `🏆 ${winner.name} 🏆`;
+                subtitle = 'Выживший в этой битве!';
+            } else if (gameMode === 'classic') {
+                title = 'Победитель!';
+                name = `🎉 ${winner.name} 🎉`;
+                subtitle = 'Поздравляем с победой!';
+            } else {
+                title = 'Выбывает...';
+                name = `👎 ${winner.name} 👎`;
+                subtitle = 'В следующий раз повезёт больше!';
+            }
+            
+            showResultPopup(title, name, subtitle);
+            
+            // В режиме "Классика" или если это финал, сбрасываем спиннинг
+            if (gameMode === 'classic' || finalWinner) {
+                isSpinning = false;
+            }
+        }
+        
+        // ----- Попап -----
         function showResultPopup(title, name, subtitle) {
             popupTitle.textContent = title;
-            popupName.innerHTML = name; // Используем innerHTML для эмодзи
+            popupName.textContent = name;
             popupSubtitle.textContent = subtitle;
             resultPopup.classList.remove('hidden');
-            setTimeout(() => {
-                resultPopup.querySelector('div').classList.remove('scale-95', 'opacity-0');
-            }, 10);
+            setTimeout(() => resultPopup.querySelector('div').classList.remove('scale-95', 'opacity-0'), 10);
         }
 
         function hideResultPopup() {
             resultPopup.querySelector('div').classList.add('scale-95', 'opacity-0');
             setTimeout(() => {
                 resultPopup.classList.add('hidden');
+                // Разблокируем кнопку, если игра не закончена
+                spinBtn.disabled = isSpinning || participants.length < 2;
             }, 300);
         }
         
-        // --- Game Logic ---
-
-        function handleAddManualParticipant() {
-            const name = nameInput.value.trim();
-            const amount = parseInt(betInput.value, 10);
-            if (name && amount > 0) {
-                const color = baseColors[participants.length % baseColors.length];
-                const avatarUrl = `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`;
-                
-                const participantData = { name, amount, color, avatarUrl, id: name }; // id для офлайн-режима
-
-                if (offlineMode) {
-                    // Офлайн-логика
-                    participants.push(participantData);
-                    updateParticipantsCardsList();
-                    drawWheel();
-                } else {
-                    // Онлайн-логика
-                    ws.send(JSON.stringify({ type: 'add_participant', data: participantData }));
-                }
-                
-                nameInput.value = '';
-                betInput.value = '';
-                nameInput.focus();
-            }
+        // ----- Обработчики Настроек -----
+        function sendSettings() {
+             if (!ws || ws.readyState !== WebSocket.OPEN) return;
+             ws.send(JSON.stringify({
+                 type: 'set_settings',
+                 data: {
+                     duration: parseInt(spinDurationInput.value, 10) || 10,
+                     speed: parseInt(spinSpeedInput.value, 10) || 5
+                 }
+             }));
         }
 
-        function spin() {
-            if (isSpinning || participants.length < 2) return;
-            
-            isSpinning = true;
-            spinBtn.disabled = true;
-            
-            const duration = (parseInt(spinDurationInput.value, 10) || 10) * 1000;
-            const speedMultiplier = (parseInt(spinSpeedInput.value, 10) || 50); // от 10 до 100
-            
-            // [ФИКС v5] Считаем totalBet/Weight прямо здесь
-            let totalWeight = 0;
-            let weights = [];
-            
-            if (gameMode === 'classic') {
-                totalWeight = participants.reduce((sum, p) => sum + p.amount, 0);
-                weights = participants.map(p => p.amount);
-            } else {
-                // "Инвертированный" режим
-                const totalBet = participants.reduce((sum, p) => sum + p.amount, 0);
-                weights = participants.map(p => (totalBet > 0 ? totalBet / p.amount : 1));
-                totalWeight = weights.reduce((sum, w) => sum + w, 0);
-            }
-            
-            if (totalWeight <= 0) {
-                isSpinning = false;
-                spinBtn.disabled = false;
-                return;
-            }
-
-            // Логика определения победителя (офлайн-режим)
-            const randomValue = Math.random() * totalWeight;
-            let accumulatedWeight = 0;
-            let result = participants[0]; // По умолчанию первый
-
-            for (let i = 0; i < participants.length; i++) {
-                accumulatedWeight += weights[i];
-                if (randomValue <= accumulatedWeight) {
-                    result = participants[i];
-                    break;
-                }
-            }
-
-            // --- Логика Анимации ---
-            // Нам нужно, чтобы стрелка `🔻` указала на СЕРЕДИНУ сектора победителя.
-            
-            let resultAngle = 0;
-            let accumulatedAngle = 0;
-
-            for (let i = 0; i < participants.length; i++) {
-                const sliceAngle = (weights[i] / totalWeight) * 2 * Math.PI;
-                if (participants[i].id === result.id) {
-                    resultAngle = accumulatedAngle + (sliceAngle / 2); // Цель - середина сектора
-                    break;
-                }
-                accumulatedAngle += sliceAngle;
-            }
-
-            // [ФИКС v6]
-            // `spinAngle` - это ТО, КУДА должно приземлиться колесо (в радианах).
-            // Мы хотим, чтобы `resultAngle` оказался наверху (под `🔻`).
-            // Анимация крутит `transform: rotate()`. 0 - это 3 часа.
-            // Наша стрелка `🔻` - это 12 часов (или -90deg / -PI/2).
-            // `finalAngle` - это куда должен указать `resultAngle` ОТНОСИТЕЛЬНО 3-х часов.
-            // Нам нужно, чтобы `resultAngle` стал `-PI/2`.
-            // `spinAngle` = (Полные обороты) + (Разница между `resultAngle` и `-PI/2`)
-            // `finalAngle = -resultAngle` (потому что мы крутим колесо, а не стрелку)
-            
-            const totalRotations = (speedMultiplier / 10) + 5; // 5-15 оборотов
-            const spinAngle = (totalRotations * 2 * Math.PI) - resultAngle;
-            
-            const startTimestamp = performance.now();
-
-            function animate(currentTime) {
-                const elapsedTime = currentTime - startTimestamp;
-                const progress = Math.min(elapsedTime / duration, 1);
-                // Плавное замедление (ease-out cubic)
-                const easeProgress = 1 - Math.pow(1 - progress, 3);
-                
-                const currentAngle = easeProgress * spinAngle;
-                canvas.style.transform = `rotate(${currentAngle}rad)`;
-
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                } else {
-                    // Анимация завершена
-                    canvas.style.transform = `rotate(${spinAngle}rad)`;
-                    handleSpinResult(result);
-                }
-            }
-
-            requestAnimationFrame(animate);
-        }
-
-        function handleSpinResult(result) {
-            // `result` - это тот, на кого УКАЗАЛА стрелка
-            
-            if (gameMode === 'classic') {
-                // В "Классике" он ПОБЕЖДАЕТ
-                showResultPopup('Победитель!', `🎉 ${result.name} 🎉`, 'Поздравляем с победой!');
-                isSpinning = false;
-                spinBtn.disabled = participants.length < 2;
-                
-            } else if (gameMode === 'elimination') {
-                // В "На выбывание" он ВЫБЫВАЕТ
-                
-                if (participants.length > 2) {
-                    // Игра продолжается
-                    showResultPopup('Выбывает...', `👎 ${result.name} 👎`, 'В следующий раз повезёт больше!');
-                    
-                    // [ФИКС v3] Удаляем игрока и разблокируем кнопку
-                    setTimeout(() => {
-                        if (offlineMode) {
-                            participants = participants.filter(p => p.id !== result.id);
-                            drawWheel();
-                            updateParticipantsCardsList();
-                        } else {
-                             ws.send(JSON.stringify({ type: 'eliminate_participant', data: { id: result.id } }));
-                        }
-                        isSpinning = false;
-                    }, 500); // Даем время прочитать попап
-
-                } else {
-                    // Это был последний раунд, остался 1 победитель
-                    const winner = participants.find(p => p.id !== result.id);
-                    showResultPopup('Победитель!', `🏆 ${winner.name} 🏆`, 'Выживший в этой битве!');
-                    
-                    // Удаляем проигравшего
-                    setTimeout(() => {
-                         if (offlineMode) {
-                            participants = participants.filter(p => p.id !== result.id);
-                            drawWheel();
-                            updateParticipantsCardsList();
-                        } else {
-                             ws.send(JSON.stringify({ type: 'eliminate_participant', data: { id: result.id } }));
-                        }
-                        isSpinning = false;
-                    }, 500);
-                }
-            }
-        }
-        
-        function clearAllParticipants() {
-            if (offlineMode) {
-                participants = [];
-                updateParticipantsCardsList();
-                drawWheel();
-            } else {
-                ws.send(JSON.stringify({ type: 'clear_participants' }));
-            }
-        }
-
-        // --- WebSocket (Backend) Logic ---
-
+        // ----- WebSocket (Связь с сервером) -----
         function connectToBackend() {
-            // --- ФОРСИРОВАННЫЙ ОФЛАЙН-РЕЖИМ ---
-            // Бро, как ты и просил, включаю офлайн-режим, чтобы ты мог тестировать.
-            // Серверная логика временно отключена.
-            console.warn("Принудительный ОФЛАЙН-РЕЖИМ для тестов.");
-            offlineMode = true;
-            connectionStatus.innerHTML = '⚠️ Офлайн-тест';
-            connectionStatus.className = "text-sm font-bold text-yellow-400 flex items-center";
-            // Сразу обновим список и кнопки на случай, если что-то зависло
-            updateParticipantsCardsList(); 
-            return; 
-            // --- КОНЕЦ ФОРСИРОВАННОГО РЕЖИМА ---
-
-
-            // Эта логика сейчас не будет выполняться, пока не уберешь 'return' выше
             if (backendUrl.startsWith('WSS_URL')) {
-                console.warn("URL сервера не указан. Запуск в офлайн-режиме.");
-                offlineMode = true;
-                connectionStatus.innerHTML = '⚠️ Офлайн-тест';
-                connectionStatus.className = "text-sm font-bold text-yellow-400 flex items-center";
+                console.error("Необходимо указать URL сервера Glitch!");
+                connectionStatus.innerHTML = '⚠️ Ошибка URL';
+                connectionStatus.classList.remove('text-yellow-400', 'text-green-400');
+                connectionStatus.classList.add('text-red-500');
                 return;
             }
             
-            offlineMode = false;
             connectionStatus.innerHTML = `
                 <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 <span>Подключение...</span>`;
-            connectionStatus.className = "text-sm font-bold text-yellow-400 flex items-center";
+            connectionStatus.classList.remove('text-green-400', 'text-red-500');
+            connectionStatus.classList.add('text-yellow-400');
             
             ws = new WebSocket(backendUrl);
 
             ws.onopen = () => {
                 console.log('Подключено к серверу!');
                 connectionStatus.innerHTML = '🟢 Подключено';
-                connectionStatus.className = "text-sm font-bold text-green-400 flex items-center";
+                connectionStatus.classList.remove('text-yellow-400', 'text-red-500');
+                connectionStatus.classList.add('text-green-400');
             };
 
             ws.onmessage = (event) => {
                 const message = JSON.parse(event.data);
-                if (message.type === 'update_state') {
-                    participants = message.participants;
-                    // Мы доверяем серверу, что totalBet/Weight посчитаны верно
-                    updateParticipantsCardsList();
-                    drawWheel();
+                
+                switch (message.type) {
+                    case 'update_state':
+                        participants = message.participants;
+                        updateParticipantsCardsList();
+                        drawWheel();
+                        break;
+                    
+                    case 'update_settings':
+                        // Обновляем UI в соответствии с настройками с сервера
+                        gameMode = message.data.gameMode || gameMode;
+                        gameModeToggle.checked = (gameMode === 'elimination');
+                        
+                        spinDurationInput.value = message.data.duration || 10;
+                        spinSpeedInput.value = message.data.speed || 5;
+                        drawWheel(); // Перерисовываем колесо, т.к. режим мог измениться
+                        break;
+                        
+                    case 'spin_result':
+                        // Сервер прислал победителя и угол. Запускаем анимацию!
+                        animateSpin(message.data.spinAngle, message.data.duration);
+                        
+                        // Показываем результат, когда анимация закончится
+                        setTimeout(() => {
+                            handleSpinResult(message.data.winner, false);
+                        }, message.data.duration);
+                        break;
+                    
+                    case 'final_winner':
+                        // Показываем финального победителя
+                        handleSpinResult(message.data.winner, true);
+                        break;
                 }
-                // TODO: Добавить обработку 'spin_result' от сервера
             };
 
             ws.onclose = () => {
                 console.log('Отключено от сервера. Попытка переподключения...');
                 if (!connectionStatus.textContent.includes('Ошибка')) {
                     connectionStatus.innerHTML = '🟡 Переподключение...';
-                    connectionStatus.className = "text-sm font-bold text-yellow-400 flex items-center";
+                    connectionStatus.classList.remove('text-green-400', 'text-red-500');
+                    connectionStatus.classList.add('text-yellow-400');
                 }
                 setTimeout(connectToBackend, 3000);
             };
 
             ws.onerror = (err) => {
-                console.error('Ошибка WebSocket: Не удалось установить соединение. Переход в офлайн-режим.');
-                connectionStatus.innerHTML = '🔴 Ошибка. Офлайн-тест';
-                connectionStatus.className = "text-sm font-bold text-red-400 flex items-center";
+                console.error('Ошибка WebSocket: ', err);
+                connectionStatus.innerHTML = '🔴 Ошибка';
+                connectionStatus.classList.remove('text-yellow-400', 'text-green-400');
+                connectionStatus.classList.add('text-red-500');
                 ws.close();
-                offlineMode = true; // Переключаемся в офлайн, если сервер упал
             };
         }
 
-        // --- Discord SDK (Client) Logic ---
-        
-        // [ОБЯЗАТЕЛЬНО] Замените на Client ID вашего Discord приложения
-        const clientId = '1292015094247264307'; 
-        
+        // ----- Discord SDK -----
         async function setupDiscordSdk() {
             const queryParams = new URLSearchParams(window.location.search);
             if (queryParams.get('frame_id') == null) {
-                console.log("Не в Discord. SDK не будет запущен.");
-                return; // Не в Discord
-            }
-            
-            const discordSdk = new DiscordSDK(clientId);
+                console.log("Не в Discord. SDK не будет инициализирован.");
+                return;
+            };
+
+            discordSdk = new DiscordSDK(clientId);
             await discordSdk.ready();
+
+            // Авторизация
+            await discordSdk.commands.authorize({
+                client_id: clientId,
+                response_type: 'code',
+                state: '',
+                prompt: 'none',
+                scope: ['identify', 'guilds.members.read'],
+            });
+
+            // Получаем пользователя Discord
+            const { code } = await discordSdk.commands.authenticate({ access_token: null });
+            // TODO: Отправить этот 'code' на бэкенд для получения токена и ID пользователя
             
-            // Авторизация для получения данных о пользователе и гильдии
-            try {
-                const { code } = await discordSdk.commands.authorize({
-                    client_id: clientId,
-                    response_type: 'code',
-                    state: '',
-                    prompt: 'none',
-                    scope: ['identify', 'guilds.members.read'],
-                });
-                
-                // (Для будущего бэкенда) Отправляем код авторизации на наш сервер
-                // ws.send(JSON.stringify({ type: 'authorize', code: code }));
-
-                // Получаем канал, в котором запущена активность
-                const channel = await discordSdk.commands.getChannel({ channel_id: discordSdk.channelId });
-                if (channel.voice_members) {
-                    voiceChannelMembers = channel.voice_members;
-                }
-
-                // Разблокируем UI, если мы в Discord
-                if (voiceChannelMembers.length > 0) {
-                    const modeLabel = document.getElementById('mode-label');
-                    modeLabel.classList.remove('opacity-50');
-                    modeLabel.style.cursor = 'pointer';
-                    addModeToggle.disabled = false;
-                    document.getElementById('mode-helper').classList.add('hidden');
-                }
-                
-            } catch (err) {
-                console.error("Ошибка авторизации Discord SDK:", err);
+            // Получаем список из голосового канала
+            const channel = await discordSdk.commands.getChannel({ channel_id: discordSdk.channelId });
+            voiceChannelMembers = channel.voice_members || [];
+            
+            if (voiceChannelMembers.length > 0) {
+                addModeContainer.classList.remove('hidden'); // Показываем переключатель
+                document.getElementById('mode-helper').classList.add('hidden');
+                addModeToggle.disabled = false;
             }
         }
-
-        // --- Event Listeners ---
-
+        
+        // ----- Слушатели событий -----
+        
+        // Ручное добавление
+        function handleAddManualParticipant() {
+            const name = nameInput.value.trim();
+            const amount = parseInt(betInput.value, 10);
+            if (name && amount > 0 && ws && ws.readyState === WebSocket.OPEN) {
+                const color = baseColors[participants.length % baseColors.length];
+                // Аватарка-заглушка
+                const avatarUrl = `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`;
+                
+                ws.send(JSON.stringify({ 
+                    type: 'add_participant', 
+                    data: { name, amount, color, avatarUrl } 
+                }));
+                
+                nameInput.value = '';
+                betInput.value = '';
+                nameInput.focus();
+            }
+        }
         addParticipantBtn.addEventListener('click', handleAddManualParticipant);
         betInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAddManualParticipant(); });
-        spinBtn.addEventListener('click', spin);
-        closePopupBtn.addEventListener('click', hideResultPopup);
-        clearAllBtn.addEventListener('click', clearAllParticipants);
-        
-        participantsCardsList.addEventListener('click', (e) => {
-            const button = e.target.closest('button');
-            if (button && button.dataset.index) {
-                const index = parseInt(button.dataset.index, 10);
-                if (offlineMode) {
-                    participants.splice(index, 1);
-                    updateParticipantsCardsList();
-                    drawWheel();
-                } else {
-                    const participantId = participants[index].id;
-                    ws.send(JSON.stringify({ type: 'remove_participant', data: { id: participantId } }));
-                }
-            }
-        });
 
-        addModeToggle.addEventListener('change', () => {
-            // [ФИКС v3] Не очищаем участников при смене режима
-            manualControls.classList.toggle('hidden');
-            autoControls.classList.toggle('hidden');
-        });
-
-        gameModeToggle.addEventListener('change', () => {
-            gameMode = gameModeToggle.checked ? 'elimination' : 'classic';
-            // [ФИКС v4] Сразу перерисовываем колесо и обновляем кнопку
-            isSpinning = false;
-            spinBtn.disabled = participants.length < 2;
-            drawWheel(); 
-        });
-
+        // Авто-добавление
         loadVoiceParticipantsBtn.addEventListener('click', () => {
-            if (voiceChannelMembers.length === 0) return;
+            if (voiceChannelMembers.length === 0 || !ws || ws.readyState !== WebSocket.OPEN) return;
             
-            clearAllParticipants(); // Сначала очищаем
+            ws.send(JSON.stringify({ type: 'clear_participants' })); // Сначала чистим
             
             const betAmount = parseInt(autoBetInput.value, 10) || 100;
             
             voiceChannelMembers.forEach((member, index) => {
                 const name = member.nick || member.user.global_name || member.user.username;
-                // [ФИКС v6] Добавляем ID пользователя
-                const id = member.user.id; 
                 const avatarUrl = member.avatar 
                     ? `https://cdn.discordapp.com/avatars/${member.user.id}/${member.avatar}.png` 
                     : `https://cdn.discordapp.com/embed/avatars/${(BigInt(member.user.id) >> 22n) % 6n}.png`;
                 const color = baseColors[index % baseColors.length];
                 
-                const participantData = { name, amount: betAmount, color, avatarUrl, id };
-
-                if (offlineMode) {
-                    participants.push(participantData);
-                } else {
-                    ws.send(JSON.stringify({ type: 'add_participant', data: participantData }));
-                }
+                ws.send(JSON.stringify({ 
+                    type: 'add_participant', 
+                    data: { name, amount: betAmount, color, avatarUrl } 
+                }));
             });
-            
-            if (offlineMode) {
-                updateParticipantsCardsList();
-                drawWheel();
-            }
         });
 
-        // --- Initial Load ---
+        // Кнопка "Крутить!"
+        spinBtn.addEventListener('click', handleSpinClick);
+
+        // Закрыть попап
+        closePopupBtn.addEventListener('click', hideResultPopup);
         
-        window.addEventListener('resize', resizeCanvas);
+        // Удаление участника (по клику на "X")
+        participantsCardsList.addEventListener('click', (e) => {
+            const targetButton = e.target.closest('button');
+            if (targetButton && targetButton.dataset.index && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'remove_participant', data: { index: targetButton.dataset.index } }));
+            }
+        });
         
-        // Первичная настройка
-        resizeCanvas(); // Устанавливаем правильный размер при загрузке
-        updateParticipantsCardsList();
-        setupDiscordSdk();
-        connectToBackend();
+        // Удалить всех
+        clearParticipantsBtn.addEventListener('click', () => {
+             if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'clear_participants' }));
+             }
+        });
+
+        // Переключатель режима добавления
+        addModeToggle.addEventListener('change', () => {
+            manualControls.classList.toggle('hidden');
+            autoControls.classList.toggle('hidden');
+        });
+
+        // Переключатель режима игры
+        gameModeToggle.addEventListener('change', () => {
+            gameMode = gameModeToggle.checked ? 'elimination' : 'classic';
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'set_game_mode', data: { mode: gameMode } }));
+            }
+        });
+        
+        // Дебаунсеры для настроек
+        spinDurationInput.addEventListener('change', sendSettings);
+        spinSpeedInput.addEventListener('change', sendSettings);
+
+        // ----- Хелперы -----
+        
+        // Ресайз
+        function resizeCanvas() {
+            const size = canvasContainer.clientWidth;
+            canvas.width = size;
+            canvas.height = size;
+            drawWheel();
+        }
+
+        // Дебаунс (чтобы 'resize' не спамил)
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // Перечитываем CSS-переменные, если тема сменилась
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            bgPrimaryColor = computedStyle.getPropertyValue('--bg-primary').trim() || '#000000';
+            dividerColor = computedStyle.getPropertyValue('--divider').trim() || '#3C3C3E';
+            drawWheel();
+        });
 
     </script>
 </body>
