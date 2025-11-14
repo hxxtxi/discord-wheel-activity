@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="h-full"> <!-- [ИЗМЕНЕНО] Добавлено h-full -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,120 +9,222 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #36393f;
-            color: #dcddde;
+        :root {
+            --background-primary: #36393f;
+            --background-secondary: #2f3136;
+            --background-tertiary: #202225;
+            --text-primary: #ffffff;
+            --text-secondary: #b9bbbe;
+            --brand-primary: #5865F2;
+            --brand-primary-hover: #4752c4;
+            --green: #3ba55d;
+            --red: #ed4245;
         }
-        .discord-input {
-            background-color: #202225;
-            border: 1px solid #101113;
+        /* [ИЗМЕНЕНО] Убран min-h-screen, используется h-full для body и html */
+        body { font-family: 'Inter', sans-serif; background-color: var(--background-primary); color: var(--text-secondary); }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        .discord-panel { background-color: var(--background-secondary); }
+        .discord-input { background-color: var(--background-tertiary); border: 1px solid #101113; color: var(--text-primary); }
+        .discord-button-brand { background-color: var(--brand-primary); color: var(--text-primary); transition: background-color 0.2s ease; }
+        .discord-button-brand:hover { background-color: var(--brand-primary-hover); }
+        .discord-button-spin { background-color: var(--green); color: var(--text-primary); transition: background-color 0.2s ease; }
+        .winner-popup { background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); }
+        canvas { transform: rotate(-90deg); }
+        /* [НОВЫЙ КОД] Добавляем тень для колеса, чтобы оно выделялось */
+        .wheel-shadow {
+            filter: drop-shadow(0px 6px 12px rgba(0, 0, 0, 0.3));
         }
-        .discord-button {
-            transition: background-color 0.2s ease-in-out;
-        }
-        .discord-button:hover {
-            background-color: #4752c4;
-        }
-        .winner-popup {
-            background-color: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-        }
-        canvas {
-            transform: rotate(-90deg); /* Начальное положение указателя - сверху */
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #2f3136;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #202225;
-            border-radius: 4px;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: var(--background-secondary); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--background-tertiary); border-radius: 4px; }
+        .toggle:checked ~ .dot { transform: translateX(100%); background-color: var(--brand-primary); }
+        .toggle:checked ~ .block { background-color: #7983f5; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-
-    <div class="w-full max-w-7xl mx-auto">
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-white">Колесо Удачи</h1>
-            <p class="text-lg text-gray-400">Добавляйте участников и их ставки, чтобы испытать удачу!</p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-            
-            <div class="bg-[#2f3136] p-6 rounded-lg shadow-lg order-3 lg:order-1 h-full">
-                <h2 class="text-2xl font-semibold text-white mb-4">Участники</h2>
-                <div id="participants-cards-list" class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar pr-2">
-                    <p class="text-gray-400 text-center pt-8">Участников пока нет.</p>
+<!-- [ИЗМЕНЕНО] Убраны flex, items-center, justify-center, min-h-screen для лучшей адаптивности на мобильных -->
+<body class="w-full h-full p-4 box-border">
+    <div class="w-full max-w-7xl mx-auto h-full">
+        <!-- [ИЗМЕНЕНО] Добавлен h-full и flex-col для адаптивного layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start h-full">
+            <!-- [ИЗМЕНЕНО] h-auto lg:h-full, max-h-[50vh] lg:max-h-[70vh] для мобильной верстки -->
+            <div class="discord-panel p-4 rounded-lg shadow-lg order-2 lg:order-1 h-auto lg:h-full">
+                <h2 class="text-xl font-semibold text-white mb-4">Участники</h2>
+                <div id="participants-cards-list" class="space-y-3 max-h-[50vh] lg:max-h-[calc(100%-40px)] overflow-y-auto custom-scrollbar pr-2">
+                    <p class="text-center pt-8">Участников пока нет.</p>
                 </div>
             </div>
-
-            <div class="relative flex flex-col items-center justify-center order-1 lg:order-2 lg:col-span-2">
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-gray-800 border-4 border-gray-900 rounded-full z-20"></div>
-                <div class="absolute -top-1 text-4xl" style="z-index: 10;">🔻</div>
-                <canvas id="wheel" width="500" height="500"></canvas>
-                <button id="spin-button" class="discord-button mt-6 bg-[#4CAF50] text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg disabled:bg-gray-500 disabled:cursor-not-allowed">
+            
+            <!-- [ИЗМЕНЕНО] h-full, flex-grow для занятия центрального места -->
+            <div class="flex flex-col items-center justify-center order-1 lg:order-2 lg:col-span-2 h-full flex-grow">
+                <h1 class="text-3xl font-bold text-white mb-2">Колесо Удачи</h1>
+                
+                <!-- [ИЗМЕНЕНО] Контейнер колеса стал адаптивным: w-full, max-w-[500px], aspect-square -->
+                <div class="relative w-full max-w-[500px] aspect-square mx-auto">
+                    <!-- [УДАЛЕНО] Убрана точка по центру, она была не нужна -->
+                    <!-- <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-gray-800 border-4 border-gray-900 rounded-full z-20"></div> -->
+                    <div class="absolute -top-1 left-1/2 -translate-x-1/2 text-4xl" style="z-index: 10;">🔻</div>
+                    
+                    <!-- [ИЗМЕНЕНО] Удалены атрибуты width/height, добавлены классы w-full/h-full и тень -->
+                    <canvas id="wheel" class="w-full h-full wheel-shadow"></canvas>
+                </div>
+                
+                <button id="spin-button" class="discord-button-spin mt-6 font-bold py-3 px-8 rounded-lg text-xl shadow-lg disabled:bg-gray-500 disabled:cursor-not-allowed">
                     Крутить!
                 </button>
             </div>
-
-            <div class="bg-[#2f3136] p-6 rounded-lg shadow-lg order-2 lg:order-3 h-full">
-                <h2 class="text-2xl font-semibold text-white mb-4">Управление</h2>
+            
+            <!-- [ИЗМЕНЕНО] h-auto lg:h-full -->
+            <div class="discord-panel p-4 rounded-lg shadow-lg order-3 lg:order-3 h-auto lg:h-full">
+                <h2 class="text-xl font-semibold text-white mb-4">Настройки Игры</h2>
+                
+                <!-- Индикатор статуса сервера -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-bold">Статус сервера</label>
+                        <div id="connection-status" class="text-sm font-bold text-yellow-400 flex items-center">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Подключение...</span>
+                        </div>
+                    </div>
+                </div>
+                <hr class="border-gray-600 mb-4">
+                
                 <div class="space-y-4">
+                    <!-- Режим добавления -->
                     <div>
-                        <label for="name" class="block text-sm font-medium text-gray-300 mb-1">Имя участника</label>
-                        <input type="text" id="name" class="discord-input w-full p-2 rounded-md text-white focus:ring-2 focus:ring-indigo-500" placeholder="Username#1234">
+                        <label class="text-sm font-bold">Режим добавления</label>
+                        <label id="mode-label" for="add-mode-toggle" class="flex items-center mt-2 opacity-50">
+                            <span class="mr-3 text-sm">Вручную</span>
+                            <div class="relative">
+                                <input type="checkbox" id="add-mode-toggle" class="sr-only toggle" disabled>
+                                <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
+                                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                            </div>
+                            <span class="ml-3 text-sm">Из канала</span>
+                        </label>
+                        <p id="mode-helper" class="text-xs text-gray-400 mt-1">Доступно только в Discord</p>
                     </div>
+
+                    <!-- Режим игры -->
                     <div>
-                        <label for="bet" class="block text-sm font-medium text-gray-300 mb-1">Сумма ставки</label>
-                        <input type="number" id="bet" class="discord-input w-full p-2 rounded-md text-white focus:ring-2 focus:ring-indigo-500" placeholder="100" min="1">
+                        <label class="text-sm font-bold">Режим игры</label>
+                        <label for="game-mode-toggle" class="flex items-center mt-2">
+                            <span class="mr-3 text-sm">Классика</span>
+                            <div class="relative">
+                                <input type="checkbox" id="game-mode-toggle" class="sr-only toggle">
+                                <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
+                                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                            </div>
+                            <span class="ml-3 text-sm">На выбывание</span>
+                        </label>
                     </div>
-                    <button id="add-participant" class="discord-button w-full bg-[#5865F2] text-white font-bold py-2 px-4 rounded-md">
-                        Добавить участника
-                    </button>
+
+                    <!-- Время вращения -->
+                    <div>
+                        <label for="spin-duration" class="block text-sm font-bold mb-1">Время вращения (сек)</label>
+                        <input type="number" id="spin-duration" class="discord-input w-full p-2 rounded-md" value="10" min="1" max="360">
+                    </div>
+
+                    <hr class="border-gray-600">
+
+                    <!-- Панель ручного управления -->
+                    <div id="manual-controls" class="space-y-4">
+                        <label class="text-sm font-bold">Добавить участника</label>
+                        <input type="text" id="name" class="discord-input w-full p-2 rounded-md" placeholder="Имя участника">
+                        <input type="number" id="bet" class="discord-input w-full p-2 rounded-md" placeholder="Сумма ставки" min="1">
+                        <button id="add-participant" class="discord-button-brand w-full font-bold py-2 px-4 rounded-md">Добавить</button>
+                    </div>
+
+                    <!-- Панель автоматического управления -->
+                    <div id="auto-controls" class="hidden space-y-4">
+                        <label class="text-sm font-bold">Загрузить из канала</label>
+                        <input type="number" id="auto-bet" class="discord-input w-full p-2 rounded-md" value="100" min="1" placeholder="Ставка для всех">
+                        <button id="load-voice-participants" class="discord-button-brand w-full font-bold py-2 px-4 rounded-md">Загрузить</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div id="winner-popup" class="fixed inset-0 winner-popup flex items-center justify-center hidden z-50">
-        <div class="bg-[#2f3136] p-8 rounded-lg shadow-xl text-center transform transition-all scale-95 opacity-0">
-            <h2 class="text-2xl font-bold text-gray-300 mb-2">Победитель!</h2>
-            <p class="text-5xl font-bold text-white mb-4" id="winner-name">🎉</p>
-            <p class="text-lg text-gray-400">Поздравляем с победой!</p>
-            <button id="close-popup" class="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-md">Закрыть</button>
+    <div id="result-popup" class="fixed inset-0 winner-popup flex items-center justify-center hidden z-50">
+        <div class="discord-panel p-8 rounded-lg shadow-xl text-center transform transition-all scale-95 opacity-0">
+            <h2 id="popup-title" class="text-2xl font-bold text-gray-300 mb-2"></h2>
+            <p class="text-5xl font-bold text-white mb-4" id="popup-name"></p>
+            <p id="popup-subtitle" class="text-lg text-gray-400"></p>
+            <button id="close-popup" class="mt-6 discord-button-brand font-bold py-2 px-6 rounded-md">Закрыть</button>
         </div>
     </div>
 
     <script type="module">
         import { DiscordSDK } from 'https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@latest/+esm';
+        
+        const backendUrl = 'WSS_URL_ВАШЕГО_СЕРВЕРА_GLITCH'; // ЗАМЕНИТЕ НА ВАШ URL
+        let ws;
 
+        // UI Elements
         const canvas = document.getElementById('wheel');
         const ctx = canvas.getContext('2d');
+        const spinBtn = document.getElementById('spin-button');
+        const participantsCardsList = document.getElementById('participants-cards-list');
+        const resultPopup = document.getElementById('result-popup');
+        const popupTitle = document.getElementById('popup-title');
+        const popupName = document.getElementById('popup-name');
+        const popupSubtitle = document.getElementById('popup-subtitle');
+        const closePopupBtn = document.getElementById('close-popup');
+        const spinDurationInput = document.getElementById('spin-duration');
+        const connectionStatus = document.getElementById('connection-status');
+
+        // Controls
+        const addModeToggle = document.getElementById('add-mode-toggle');
+        const gameModeToggle = document.getElementById('game-mode-toggle');
+        const manualControls = document.getElementById('manual-controls');
+        const autoControls = document.getElementById('auto-controls');
         const nameInput = document.getElementById('name');
         const betInput = document.getElementById('bet');
         const addParticipantBtn = document.getElementById('add-participant');
-        const spinBtn = document.getElementById('spin-button');
-        const participantsCardsList = document.getElementById('participants-cards-list');
-        const winnerPopup = document.getElementById('winner-popup');
-        const winnerNameEl = document.getElementById('winner-name');
-        const closePopupBtn = document.getElementById('close-popup');
+        const autoBetInput = document.getElementById('auto-bet');
+        const loadVoiceParticipantsBtn = document.getElementById('load-voice-participants');
 
+        // State
         let participants = [];
         let totalBet = 0;
         let isSpinning = false;
+        let voiceChannelMembers = [];
+        let gameMode = 'classic'; // 'classic' or 'elimination'
+        let isOfflineMode = false; // [НОВЫЙ КОД] Флаг для офлайн-теста
         
         const baseColors = ['#e6194B', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#469990', '#dcbeff', '#9A6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#a9a9a9'];
 
+        // [НОВАЯ ФУНКЦИЯ] Установка размера канваса и перерисовка
+        function resizeCanvas() {
+            // Используем requestAnimationFrame для ожидания рендеринга CSS
+            requestAnimationFrame(() => {
+                const canvasContainer = canvas.parentElement;
+                if (!canvasContainer) return;
+
+                // Получаем реальный размер контейнера (который стал адаптивным)
+                const size = canvasContainer.clientWidth;
+
+                // Устанавливаем размер буфера отрисовки канваса
+                canvas.width = size;
+                canvas.height = size;
+                
+                // Перерисовываем колесо с новым размером
+                drawWheel();
+            });
+        }
+
         function drawWheel() {
+            // [ИЗМЕНЕНО] size теперь берется из canvas.width, который мы установили в resizeCanvas
             const size = canvas.width;
             const center = size / 2;
             let startAngle = 0;
             ctx.clearRect(0, 0, size, size);
 
+            // [ИЗМЕНЕНО] Уменьшен шрифт для пустого колеса для лучшей адаптивности
             if (participants.length === 0) {
                 ctx.beginPath();
                 ctx.arc(center, center, center - 5, 0, 2 * Math.PI);
@@ -131,15 +233,18 @@
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillStyle = '#dcddde';
-                ctx.font = 'bold 20px Inter';
-                ctx.save();
-                ctx.rotate(Math.PI/2);
-                ctx.fillText('Добавьте участников', center, -center);
-                ctx.restore();
+                ctx.font = `bold ${Math.max(14, size * 0.04)}px Inter`; // Адаптивный шрифт
+                
+                // [ИЗМЕНЕНО] Убрана ротация, текст "Добавьте участников" теперь будет горизонтальным и читабельным
+                // ctx.save();
+                // ctx.rotate(Math.PI / 2);
+                ctx.fillText('Добавьте участников', center, center); // [ИЗМЕНЕНО] Рисуем по центру
+                // ctx.restore();
                 return;
             }
 
             participants.forEach(p => {
+                if (totalBet <= 0) return;
                 const sliceAngle = (p.amount / totalBet) * 2 * Math.PI;
                 ctx.beginPath();
                 ctx.moveTo(center, center);
@@ -147,190 +252,299 @@
                 ctx.closePath();
                 ctx.fillStyle = p.color;
                 ctx.fill();
-
                 ctx.save();
                 ctx.fillStyle = 'white';
-                ctx.font = 'bold 14px Inter';
-                const textAngle = startAngle + sliceAngle / 2 + Math.PI/2;
+                // [ИЗМЕНЕНО] Адаптивный шрифт для имен
+                ctx.font = `bold ${Math.max(10, size * 0.028)}px Inter`;
+                const textAngle = startAngle + sliceAngle / 2 + Math.PI / 2;
                 ctx.translate(center, center);
                 ctx.rotate(textAngle);
                 ctx.textAlign = 'center';
                 const displayName = p.name.length > 10 ? p.name.substring(0, 8) + '...' : p.name;
+                // [ИЗМЕНЕНО] Позиция текста стала адаптивной
                 ctx.fillText(displayName, 0, -center * 0.7);
                 ctx.restore();
-
                 startAngle += sliceAngle;
             });
         }
         
         function updateParticipantsCardsList() {
             if (participants.length === 0) {
-                participantsCardsList.innerHTML = '<p class="text-gray-400 text-center pt-8">Участников пока нет.</p>';
+                participantsCardsList.innerHTML = '<p class="text-center pt-8">Участников пока нет.</p>';
                 spinBtn.disabled = true;
                 return;
             }
-            
             participantsCardsList.innerHTML = '';
             participants.forEach((p, index) => {
                 const card = document.createElement('div');
-                card.className = 'flex items-center bg-[#202225] p-3 rounded-lg transition-transform transform hover:scale-105';
+                card.className = 'flex items-center p-3 rounded-lg transition-transform transform hover:scale-105';
+                card.style.backgroundColor = 'var(--background-tertiary)';
                 card.innerHTML = `
-                    <img src="${p.avatarUrl}" class="w-12 h-12 rounded-full mr-4 border-2" style="border-color: ${p.color};">
-                    <div class="flex-grow">
-                        <p class="font-bold text-white truncate">${p.name}</p>
-                        <p class="text-sm text-gray-400">Ставка: ${p.amount}$</p>
-                    </div>
-                    <button class="ml-2 text-gray-500 hover:text-red-400" data-index="${index}">✖</button>
-                `;
+                    <img src="${p.avatarUrl}" class="w-10 h-10 rounded-full mr-3 border-2" style="border-color: ${p.color};">
+                    <div class="flex-grow"><p class="font-bold text-white truncate">${p.name}</p><p class="text-sm">Ставка: ${p.amount}$</p></div>
+                    <button class="ml-2 text-gray-500 hover:text-red-400" data-index="${index}">✖</button>`;
                 participantsCardsList.appendChild(card);
             });
-            spinBtn.disabled = false;
+            spinBtn.disabled = participants.length < 2;
         }
 
-        function addParticipant(name, amount, avatarUrl) {
-            if (name && amount > 0) {
-                const color = baseColors[participants.length % baseColors.length];
-                const finalAvatarUrl = avatarUrl || `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`;
-                
-                participants.push({ name, amount, color, avatarUrl: finalAvatarUrl });
-                totalBet += amount;
-                                
-                updateParticipantsCardsList();
-                drawWheel();
-            }
-        }
-        
         function handleAddManualParticipant() {
             const name = nameInput.value.trim();
             const amount = parseInt(betInput.value, 10);
-             if (name && amount > 0) {
-                 addParticipant(name, amount);
-                 nameInput.value = '';
-                 betInput.value = '';
-                 nameInput.focus();
-             } else {
-                nameInput.classList.add('ring-2', 'ring-red-500');
-                setTimeout(() => nameInput.classList.remove('ring-2', 'ring-red-500'), 2000);
+            if (name && amount > 0) {
+                const color = baseColors[participants.length % baseColors.length];
+                const avatarUrl = `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(name)}`;
+                
+                // [ИЗМЕНЕНО] Добавлена логика для офлайн-режима
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'add_participant', data: { name, amount, color, avatarUrl } }));
+                } else if (isOfflineMode) {
+                    // Имитируем ответ сервера: добавляем локально
+                    participants.push({ name, amount, color, avatarUrl });
+                    totalBet = participants.reduce((acc, p) => acc + p.amount, 0);
+                    updateParticipantsCardsList();
+                    drawWheel();
+                }
+
+                nameInput.value = '';
+                betInput.value = '';
+                nameInput.focus();
             }
         }
 
-        function removeParticipant(index) {
-            const removed = participants.splice(index, 1)[0];
-            totalBet -= removed.amount;
-            updateParticipantsCardsList();
-            drawWheel();
-        }
-        
         function spin() {
-            if (isSpinning || participants.length < 1) return;
+            if (isSpinning || participants.length < 2) return;
             isSpinning = true;
             spinBtn.disabled = true;
-
+            const duration = (parseInt(spinDurationInput.value, 10) || 10) * 1000;
             const spinAngle = Math.random() * 10 + 10;
             const startTimestamp = performance.now();
-            const duration = 5000;
-
             function animate(currentTime) {
                 const elapsedTime = currentTime - startTimestamp;
                 const progress = Math.min(elapsedTime / duration, 1);
                 const easeProgress = 1 - Math.pow(1 - progress, 3);
-                
                 const currentAngle = easeProgress * spinAngle;
                 canvas.style.transform = `rotate(${currentAngle}rad)`;
-
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
                     canvas.style.transform = `rotate(${spinAngle}rad)`;
                     const finalAngle = spinAngle % (2 * Math.PI);
                     const pointerAngle = (finalAngle + Math.PI / 2) % (2 * Math.PI);
-                    
                     let accumulatedAngle = 0;
                     for (const p of participants) {
                         const sliceAngle = (p.amount / totalBet) * 2 * Math.PI;
                         if (pointerAngle >= accumulatedAngle && pointerAngle < accumulatedAngle + sliceAngle) {
-                            showWinner(p);
+                            handleSpinResult(p);
                             break;
                         }
                         accumulatedAngle += sliceAngle;
                     }
-                    isSpinning = false;
                 }
             }
             requestAnimationFrame(animate);
         }
+
+        function handleSpinResult(result) {
+            if (gameMode === 'classic') {
+                showResultPopup('Победитель!', `🎉 ${result.name} 🎉`, 'Поздравляем с победой!');
+                isSpinning = false; // Позволяем крутить снова
+            } else if (gameMode === 'elimination') {
+                if (participants.length > 2) {
+                    showResultPopup('Выбывает...', `👎 ${result.name} 👎`, 'В следующий раз повезёт больше!');
+                    ws.send(JSON.stringify({ type: 'eliminate_participant', data: { name: result.name } }));
+                    isSpinning = false; // Позволяем крутить дальше
+                } else {
+                    // Находим победителя (тот, кто НЕ result)
+                    const winner = participants.find(p => p.name !== result.name);
+                    showResultPopup('Победитель!', `🏆 ${winner.name} 🏆`, 'Выживший в этой битве!');
+                    ws.send(JSON.stringify({ type: 'eliminate_participant', data: { name: result.name } }));
+                    isSpinning = false; 
+                }
+            }
+        }
         
-        function showWinner(winner) {
-            winnerNameEl.textContent = `🎉 ${winner.name} 🎉`;
-            winnerPopup.classList.remove('hidden');
-            setTimeout(() => {
-                winnerPopup.querySelector('div').classList.remove('scale-95', 'opacity-0');
-            }, 10);
+        function showResultPopup(title, name, subtitle) {
+            popupTitle.textContent = title;
+            popupName.textContent = name;
+            popupSubtitle.textContent = subtitle;
+            resultPopup.classList.remove('hidden');
+            setTimeout(() => resultPopup.querySelector('div').classList.remove('scale-95', 'opacity-0'), 10);
         }
 
-        function hideWinner() {
-            winnerPopup.querySelector('div').classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                winnerPopup.classList.add('hidden');
-                spinBtn.disabled = false;
-            }, 300);
+        function hideResultPopup() {
+            resultPopup.querySelector('div').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => resultPopup.classList.add('hidden'), 300);
+        }
+
+        function connectToBackend() {
+            if (backendUrl.startsWith('WSS_URL')) {
+                console.error("Необходимо указать URL сервера Glitch!");
+                connectionStatus.innerHTML = '⚠️ Офлайн-тест'; // [ИЗМЕНЕНО]
+                connectionStatus.classList.remove('text-yellow-400', 'text-green-400');
+                connectionStatus.classList.add('text-red-400');
+                
+                isOfflineMode = true; // [НОВЫЙ КОД] Включаем офлайн-режим
+                
+                return;
+            }
+            connectionStatus.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Подключение...</span>`;
+            connectionStatus.classList.remove('text-green-400', 'text-red-400');
+            connectionStatus.classList.add('text-yellow-400');
+            
+            ws = new WebSocket(backendUrl);
+            ws.onopen = () => {
+                console.log('Подключено к серверу!');
+                connectionStatus.innerHTML = '🟢 Подключено';
+                connectionStatus.classList.remove('text-yellow-400', 'text-red-400');
+                connectionStatus.classList.add('text-green-400');
+            };
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                if (message.type === 'update_state') {
+                    participants = message.participants;
+                    totalBet = message.totalBet;
+                    updateParticipantsCardsList();
+                    drawWheel(); // [ИЗМЕНЕНО] Убеждаемся, что колесо перерисовывается при обновлении
+                }
+            };
+            ws.onclose = () => {
+                console.log('Отключено от сервера. Попытка переподключения...');
+                if (!connectionStatus.textContent.includes('Ошибка')) {
+                    connectionStatus.innerHTML = '🟡 Переподключение...';
+                    connectionStatus.classList.remove('text-green-400', 'text-red-400');
+                    connectionStatus.classList.add('text-yellow-400');
+                }
+                setTimeout(connectToBackend, 3000);
+            };
+            ws.onerror = (err) => {
+                console.error('Ошибка WebSocket: Не удалось установить соединение. Проверьте URL в коде и убедитесь, что сервер на Glitch активен.');
+                connectionStatus.innerHTML = '🔴 Ошибка';
+                connectionStatus.classList.remove('text-yellow-400', 'text-green-400');
+                connectionStatus.classList.add('text-red-400');
+                ws.close();
+            };
         }
 
         addParticipantBtn.addEventListener('click', handleAddManualParticipant);
-        betInput.addEventListener('keydown', (e) => {
-             if (e.key === 'Enter') handleAddManualParticipant();
-        });
+        betInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAddManualParticipant(); });
         spinBtn.addEventListener('click', spin);
-        closePopupBtn.addEventListener('click', hideWinner);
+        closePopupBtn.addEventListener('click', hideResultPopup);
         
         participantsCardsList.addEventListener('click', (e) => {
-            if(e.target.tagName === 'BUTTON') {
-                const index = e.target.dataset.index;
-                removeParticipant(index);
+            if (e.target.tagName === 'BUTTON') {
+                const index = parseInt(e.target.dataset.index, 10); // [ИЗМЕНЕНО] Убедились, что это число
+                
+                // [ИЗМЕНЕНО] Добавлена логика для офлайн-режима
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'remove_participant', data: { index: index } }));
+                } else if (isOfflineMode) {
+                    // Имитируем ответ сервера: удаляем локально
+                    participants.splice(index, 1);
+                    totalBet = participants.reduce((acc, p) => acc + p.amount, 0);
+                    updateParticipantsCardsList();
+                    drawWheel();
+                }
             }
         });
-        
-        // --- Инициализация Discord SDK ---
-        const clientId = '1423090575493824572'; 
-        let discordSdk;
 
-        async function setupDiscordSdk() {
-            // --- ИСПРАВЛЕНИЕ: Проверяем, запущено ли приложение внутри Discord ---
-            const queryParams = new URLSearchParams(window.location.search);
-            if (queryParams.get('frame_id') == null) {
-                console.warn("Приложение запущено вне Discord. SDK не будет инициализирован.");
-                // Позволяем приложению работать в "тестовом режиме" без SDK
-                return;
+        addModeToggle.addEventListener('change', () => {
+            // [ИЗМЕНЕНО] Добавлена логика для офлайн-режима
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'clear_participants' }));
+            } else if (isOfflineMode) {
+                participants = [];
+                totalBet = 0;
+                updateParticipantsCardsList();
+                drawWheel();
             }
-            // --- КОНЕЦ ИСПРАВЛЕНИЯ ---
+            manualControls.classList.toggle('hidden');
+            autoControls.classList.toggle('hidden');
+        });
 
-            try {
-                discordSdk = new DiscordSDK(clientId);
-                await discordSdk.ready();
+        gameModeToggle.addEventListener('change', () => {
+            gameMode = gameModeToggle.checked ? 'elimination' : 'classic';
+            // [ИЗМЕНЕНО] Добавлена логика для офлайн-режима
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'clear_participants' })); // Сбрасываем игру при смене режима
+            } else if (isOfflineMode) {
+                participants = [];
+                totalBet = 0;
+                updateParticipantsCardsList();
+                drawWheel();
+            }
+        });
 
-                const { code } = await discordSdk.commands.authorize({
-                    client_id: clientId,
-                    response_type: 'code',
-                    state: '',
-                    prompt: 'none',
-                    scope: ['identify', 'guilds.members.read'],
-                });
+        loadVoiceParticipantsBtn.addEventListener('click', () => {
+            if (voiceChannelMembers.length === 0) return;
+            // [ИЗМЕНЕНО] Добавлена логика для офлайн-режима
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'clear_participants' }));
+            } else if (isOfflineMode) {
+                participants = [];
+                totalBet = 0;
+            }
+            
+            const betAmount = parseInt(autoBetInput.value, 10) || 100;
+            voiceChannelMembers.forEach((member, index) => {
+                const name = member.nick || member.user.global_name || member.user.username;
+                const avatarUrl = member.avatar ? `https://cdn.discordapp.com/avatars/${member.user.id}/${member.avatar}.png` : `https://cdn.discordapp.com/embed/avatars/${(BigInt(member.user.id) >> 22n) % 6n}.png`;
+                const color = baseColors[index % baseColors.length];
                 
-                const channel = await discordSdk.commands.getChannel({channel_id: discordSdk.channelId});
-                
-                console.log("Участники в голосовом канале:", channel.voice_members);
+                // [ИЗМЕНЕНО] Добавлена логика для офлайн-режима
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'add_participant', data: { name, amount: betAmount, color, avatarUrl } }));
+                } else if (isOfflineMode) {
+                    participants.push({ name, amount: betAmount, color, avatarUrl });
+                }
+            });
 
-            } catch(e) {
-                console.error("Ошибка при инициализации Discord SDK:", e);
+            // [НОВЫЙ КОД] Обновляем UI в офлайн-режиме после добавления всех
+            if (isOfflineMode) {
+                totalBet = participants.reduce((acc, p) => acc + p.amount, 0);
+                updateParticipantsCardsList();
+                drawWheel();
+            }
+        });
+
+        const clientId = '1292015094247264307'; // <-- ЗАМЕНИ ЭТО НА СВОЙ ID
+        async function setupDiscordSdk() {
+            const queryParams = new URLSearchParams(window.location.search);
+            if (queryParams.get('frame_id') == null) return;
+            const discordSdk = new DiscordSDK(clientId);
+            await discordSdk.ready();
+            await discordSdk.commands.authorize({ client_id: clientId, response_type: 'code', state: '', prompt: 'none', scope: ['identify', 'guilds.members.read'], });
+            const channel = await discordSdk.commands.getChannel({ channel_id: discordSdk.channelId });
+            voiceChannelMembers = channel.voice_members || [];
+            if (voiceChannelMembers.length > 0) {
+                const modeLabel = document.getElementById('mode-label');
+                modeLabel.classList.remove('opacity-50');
+                modeLabel.style.cursor = 'pointer';
+                addModeToggle.disabled = false;
+                document.getElementById('mode-helper').classList.add('hidden');
             }
         }
 
-        // --- Инициализация ---
-        drawWheel();
+        // [НОВЫЙ КОД] Добавляем слушатель изменения размера окна
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            // "Дебаунс" - ждем 100мс после окончания ресайза, чтобы не перерисовывать 100 раз
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeCanvas, 100);
+        });
+
+        // Инициализация
         updateParticipantsCardsList();
         setupDiscordSdk();
-
+        connectToBackend();
+        
+        // [НОВЫЙ КОД] Вызываем resizeCanvas() при первой загрузке
+        resizeCanvas();
     </script>
 </body>
 </html>
-
