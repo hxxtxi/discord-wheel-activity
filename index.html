@@ -296,6 +296,10 @@
         let gameMode = 'classic'; // 'classic' or 'elimination'
         let offlineMode = false; // Флаг для офлайн-тестирования
         
+        // [ФИКС] Читаем CSS-переменную для использования в JS
+        const style = getComputedStyle(document.body);
+        const bgPrimaryColor = style.getPropertyValue('--bg-primary').trim();
+        
         // Базовые цвета (яркие, в стиле Apple)
         const baseColors = ['#0A84FF', '#FF453A', '#30D158', '#FF9F0A', '#AF52DE', '#FFD60A', '#5E5CE6', '#64D2FF', '#FF2D55'];
 
@@ -390,7 +394,7 @@
                 
                 // [ФИКС v3] Разделительная линия (только если > 1 участника)
                 if (participants.length > 1) {
-                    ctx.strokeStyle = var(--bg-primary); // Цвет фона для разделения
+                    ctx.strokeStyle = bgPrimaryColor; // [ФИКС] Используем JS-переменную вместо CSS
                     ctx.lineWidth = 3;
                     ctx.stroke();
                 }
@@ -633,6 +637,20 @@
         // --- WebSocket (Backend) Logic ---
 
         function connectToBackend() {
+            // --- ФОРСИРОВАННЫЙ ОФЛАЙН-РЕЖИМ ---
+            // Бро, как ты и просил, включаю офлайн-режим, чтобы ты мог тестировать.
+            // Серверная логика временно отключена.
+            console.warn("Принудительный ОФЛАЙН-РЕЖИМ для тестов.");
+            offlineMode = true;
+            connectionStatus.innerHTML = '⚠️ Офлайн-тест';
+            connectionStatus.className = "text-sm font-bold text-yellow-400 flex items-center";
+            // Сразу обновим список и кнопки на случай, если что-то зависло
+            updateParticipantsCardsList(); 
+            return; 
+            // --- КОНЕЦ ФОРСИРОВАННОГО РЕЖИМА ---
+
+
+            // Эта логика сейчас не будет выполняться, пока не уберешь 'return' выше
             if (backendUrl.startsWith('WSS_URL')) {
                 console.warn("URL сервера не указан. Запуск в офлайн-режиме.");
                 offlineMode = true;
