@@ -43,7 +43,6 @@
         .discord-button-spin:active:not(:disabled) {
             transform: scale(0.98);
         }
-        /* [НОВЫЙ КОД] Стиль для кнопки "Удалить всех" */
         .discord-button-danger {
             background-color: transparent;
             color: var(--red);
@@ -59,7 +58,10 @@
         }
 
         .winner-popup { background-color: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); }
-        canvas { transform: rotate(-90deg); }
+        
+        /* [ГЛАВНЫЙ ФИКС] Убрали поворот из CSS, чтобы избежать конфликта с JS */
+        /* canvas { transform: rotate(-90deg); } - УДАЛЕНО */
+
         .wheel-shadow {
             filter: drop-shadow(0px 6px 12px rgba(0, 0, 0, 0.3));
         }
@@ -75,7 +77,6 @@
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start h-full">
             <div class="discord-panel p-4 rounded-lg shadow-lg order-2 lg:order-1 h-auto lg:h-full">
                 
-                <!-- [ИЗМЕНЕНО] Добавлена кнопка "Удалить всех" -->
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-semibold text-white">Участники</h2>
                     <button id="clear-all-btn" class="discord-button-danger">Удалить всех</button>
@@ -88,10 +89,12 @@
             
             <div class="flex flex-col items-center justify-center order-1 lg:order-2 lg:col-span-2 h-full flex-grow">
                 <h1 class="text-3xl font-bold text-white mb-2">Колесо Удачи</h1>
+                <p id="wheel-subtitle" class="text-lg text-gray-400 -mt-2 mb-2 transition-opacity duration-300 opacity-0">Добавьте участников</p>
                 
                 <div class="relative w-full max-w-[500px] aspect-square mx-auto">
                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl z-20" style="filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));">💀</div>
                     <div class="absolute -top-1 left-1/2 -translate-x-1/2 text-4xl" style="z-index: 10;">🔻</div>
+                    <!-- [ИЗМЕНЕНО] Убрали rotate(-90deg) из CSS, он теперь в JS -->
                     <canvas id="wheel" class="w-full h-full wheel-shadow"></canvas>
                 </div>
                 
@@ -194,7 +197,8 @@
         const ctx = canvas.getContext('2d');
         const spinBtn = document.getElementById('spin-button');
         const participantsCardsList = document.getElementById('participants-cards-list');
-        const clearAllBtn = document.getElementById('clear-all-btn'); // [НОВЫЙ КОД]
+        const clearAllBtn = document.getElementById('clear-all-btn'); 
+        const wheelSubtitle = document.getElementById('wheel-subtitle'); // <-- ДОБАВИЛ
         const resultPopup = document.getElementById('result-popup');
         const popupTitle = document.getElementById('popup-title');
         const popupName = document.getElementById('popup-name');
@@ -215,7 +219,6 @@
 
         // State
         let participants = [];
-        // [ИЗМЕНЕНО] Убрали totalBet из глобального состояния. Это был источник багов.
         let isSpinning = false;
         let voiceChannelMembers = [];
         let gameMode = 'classic'; // 'classic' or 'elimination'
@@ -224,7 +227,6 @@
         const baseColors = ['#e6194B', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#42d4f4', '#f032e6', '#bfef45', '#fabed4', '#469990', '#dcbeff', '#9A6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#a9a9a9'];
 
         function resizeCanvas() {
-            // ... (Без изменений)
             requestAnimationFrame(() => {
                 const canvasContainer = canvas.parentElement;
                 if (!canvasContainer) return;
@@ -236,52 +238,58 @@
         }
 
         function drawWheel() {
+            // [ИЗМЕНЕНО] Управление подзаголовком
+            if (participants.length === 0) {
+                wheelSubtitle.classList.remove('opacity-0');
+            } else {
+                wheelSubtitle.classList.add('opacity-0');
+            }
+            
             const size = canvas.width;
             
-            // [ФИКС] Добавляем "защиту" от ресайза до 0
-            // Если размер канваса слишком маленький (меньше 10px), 
-            // радиус (center - 5) станет отрицательным.
+            // [ФИКС] Защита от отрицательного радиуса
             if (size < 10) { 
-                ctx.clearRect(0, 0, size, size); // Просто очищаем, чтобы не было артефактов
-                return; // Выходим из функции, ничего не рисуем
+                ctx.clearRect(0, 0, size, size); 
+                return; 
             }
 
             const center = size / 2;
             let startAngle = 0;
             ctx.clearRect(0, 0, size, size);
 
+            // [ГЛАВНЫЙ ФИКС] Поворачиваем холст, чтобы 0 радиан был "на 12 часов"
+            ctx.save();
+            ctx.translate(center, center); // Переходим в центр
+            ctx.rotate(-Math.PI / 2); // Поворачиваем на -90 градусов
+            ctx.translate(-center, -center); // Возвращаемся
+
             if (participants.length === 0) {
-                // ... (Без изменений)
+                // Рисуем стартовый серый круг
                 ctx.beginPath();
                 ctx.arc(center, center, center - 5, 0, 2 * Math.PI);
                 ctx.fillStyle = '#4a4d53';
                 ctx.fill();
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#dcddde';
-                ctx.font = `bold ${Math.max(14, size * 0.04)}px Inter`; 
-                ctx.fillText('Добавьте участников', center, center);
+                ctx.restore(); // [ФИКС] Восстанавливаем холст
+                
+                // [УДАЛЕНО] Убрали текст с колеса
+                // ctx.textAlign = 'center';
+                // ctx.textBaseline = 'middle';
+                // ctx.fillStyle = '#dcddde';
+                // ctx.font = \`bold \${Math.max(14, size * 0.04)}px Inter\`; 
+                // ctx.fillText('Добавьте участников', center, center);
                 return;
             }
 
-            // [ИЗМЕНЕНО] Логика отрисовки ТЕПЕРЬ ПОЛНОСТЬЮ ИСПРАВЛЕНА
+            // РЕЖИМ НА ВЫБЫВАНИЕ (Инверсивная логика)
             if (gameMode === 'elimination') {
-                // РЕЖИМ НА ВЫБЫВАНИЕ (Инверсивная логика)
-                // 1. Считаем общую сумму ставок
                 const totalBet = participants.reduce((acc, p) => acc + (p.amount || 1), 0);
-                if (totalBet === 0) return; // Нечего рисовать
+                if (totalBet === 0) { ctx.restore(); return; } 
                 
-                // 2. Считаем "общий инвертированный вес"
-                // Логика: (totalBet / p.amount)
-                // Пример: Ставка 1000: 1010 / 1000 = 1.01 (маленький вес)
-                // Пример: Ставка 10:   1010 / 10   = 101 (большой вес)
                 const totalInverseWeight = participants.reduce((acc, p) => acc + (totalBet / (p.amount || 1)), 0);
-                if (totalInverseWeight === 0) return;
+                if (totalInverseWeight === 0) { ctx.restore(); return; }
 
                 participants.forEach(p => {
-                    // 3. Считаем "вес" этого участника
                     const inverseWeight = (totalBet / (p.amount || 1));
-                    // 4. Считаем сектор на основе этого веса
                     const sliceAngle = (inverseWeight / totalInverseWeight) * 2 * Math.PI;
                     
                     ctx.beginPath();
@@ -302,10 +310,8 @@
                 
             } else {
                 // РЕЖИМ КЛАССИКА (Стандартная, пропорциональная логика)
-                // 1. Считаем totalBet прямо здесь, а не берем из глоб. переменной
                 const totalBet = participants.reduce((acc, p) => acc + p.amount, 0);
                 if (totalBet <= 0) {
-                     // Запасной вариант, если все ставки по 0 (делим поровну)
                     const sliceAngle = (2 * Math.PI) / participants.length;
                     participants.forEach(p => {
                          ctx.beginPath();
@@ -314,31 +320,36 @@
                         ctx.closePath();
                         ctx.fillStyle = p.color;
                         ctx.fill();
-                        if (participants.length > 1) { ctx.stroke(); }
+                        if (participants.length > 1) { 
+                            ctx.strokeStyle = 'var(--background-primary)';
+                            ctx.lineWidth = 3;
+                            ctx.stroke(); 
+                        }
                         startAngle += sliceAngle;
                     });
-                    return;
+                } else {
+                     participants.forEach(p => {
+                        const sliceAngle = (p.amount / totalBet) * 2 * Math.PI;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(center, center);
+                        ctx.arc(center, center, center - 5, startAngle, startAngle + sliceAngle);
+                        ctx.closePath();
+                        ctx.fillStyle = p.color;
+                        ctx.fill();
+
+                        if (participants.length > 1) {
+                            ctx.strokeStyle = 'var(--background-primary)';
+                            ctx.lineWidth = 3;
+                            ctx.stroke();
+                        }
+                        
+                        startAngle += sliceAngle;
+                    });
                 }
-
-                participants.forEach(p => {
-                    const sliceAngle = (p.amount / totalBet) * 2 * Math.PI;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(center, center);
-                    ctx.arc(center, center, center - 5, startAngle, startAngle + sliceAngle);
-                    ctx.closePath();
-                    ctx.fillStyle = p.color;
-                    ctx.fill();
-
-                    if (participants.length > 1) {
-                        ctx.strokeStyle = 'var(--background-primary)';
-                        ctx.lineWidth = 3;
-                        ctx.stroke();
-                    }
-                    
-                    startAngle += sliceAngle;
-                });
             }
+            
+            ctx.restore(); // [ФИКС] Восстанавливаем холст после рисования секторов
         }
         
         function updateParticipantsCardsList() {
@@ -370,6 +381,7 @@
         }
 
         function handleAddManualParticipant() {
+            // ... (Без изменений)
             const name = nameInput.value.trim();
             const amount = parseInt(betInput.value, 10);
             if (name && amount > 0) {
@@ -380,7 +392,6 @@
                     ws.send(JSON.stringify({ type: 'add_participant', data: { name, amount, color, avatarUrl } }));
                 } else if (isOfflineMode) {
                     participants.push({ name, amount, color, avatarUrl });
-                    // [ИЗМЕНЕНО] totalBet больше не обновляется здесь
                     updateParticipantsCardsList();
                     drawWheel();
                 }
@@ -398,7 +409,7 @@
             const duration = (parseInt(spinDurationInput.value, 10) || 10) * 1000;
             
             const speedMultiplier = (parseInt(spinSpeedInput.value, 10) || 100) / 10; 
-            const spinAngle = (Math.random() * speedMultiplier) + 10; 
+            const spinAngle = (Math.random() * speedMultiplier) + 10; // Это в радианах
             
             const startTimestamp = performance.now();
             function animate(currentTime) {
@@ -406,19 +417,27 @@
                 const progress = Math.min(elapsedTime / duration, 1);
                 const easeProgress = 1 - Math.pow(1 - progress, 3);
                 const currentAngle = easeProgress * spinAngle;
-                canvas.style.transform = `rotate(${currentAngle}rad)`;
+                canvas.style.transform = `rotate(${currentAngle}rad)`; // JS-анимация крутит `canvas`
+                
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
                     canvas.style.transform = `rotate(${spinAngle}rad)`;
-                    const finalAngle = spinAngle % (2 * Math.PI);
-                    const pointerAngle = (finalAngle + Math.PI / 2) % (2 * Math.PI);
+                    
+                    // [ГЛАВНЫЙ ФИКС] Логика определения победителя
+                    // Теперь она СИНХРОНИЗИРОВАНА с drawWheel()
+                    
+                    const finalAngle = spinAngle % (2 * Math.PI); // Угол остановки анимации
+                    
+                    // Так как drawWheel() "сдвинут" на -90 (PI/2), 
+                    // мы должны "отмотать" finalAngle назад, чтобы найти, 
+                    // на какой сектор он указывает в *оригинальной* системе координат.
+                    const pointerAngle = ((2 * Math.PI) - finalAngle) % (2 * Math.PI);
                     
                     let accumulatedAngle = 0;
 
-                    // [ИЗМЕНЕНО] Логика определения победителя ТЕПЕРЬ СИНХРОНИЗИРОВАНА с drawWheel
+                    // Логика "На выбывание" (СКОПИРОВАНА из drawWheel)
                     if (gameMode === 'elimination') {
-                        // РЕЖИМ НА ВЫБЫВАНИЕ (Инверсивная логика)
                         const totalBet = participants.reduce((acc, p) => acc + (p.amount || 1), 0);
                         const totalInverseWeight = participants.reduce((acc, p) => acc + (totalBet / (p.amount || 1)), 0);
                         if (totalInverseWeight === 0) return;
@@ -427,16 +446,15 @@
                             const inverseWeight = (totalBet / (p.amount || 1));
                             const sliceAngle = (inverseWeight / totalInverseWeight) * 2 * Math.PI;
                             if (pointerAngle >= accumulatedAngle && pointerAngle < accumulatedAngle + sliceAngle) {
-                                handleSpinResult(p); // p - тот, на кого указывает стрелка
+                                handleSpinResult(p); 
                                 break;
                             }
                             accumulatedAngle += sliceAngle;
                         }
                     } else {
-                        // РЕЖИМ КЛАССИКА (Стандартная логика)
+                        // Логика "Классика" (СКОПИРОВАНА из drawWheel)
                         const totalBet = participants.reduce((acc, p) => acc + p.amount, 0);
                         if (totalBet <= 0) {
-                            // Запасной вариант
                             const sliceAngle = (2 * Math.PI) / participants.length;
                              for (const p of participants) {
                                 if (pointerAngle >= accumulatedAngle && pointerAngle < accumulatedAngle + sliceAngle) {
@@ -462,16 +480,12 @@
         }
 
         function handleSpinResult(result) {
-            // 'result' - это участник, на которого указывает стрелка
-
+            // ... (Логика не изменилась, она и была правильной) ...
             if (gameMode === 'classic') {
-                // В "Классике" тот, на кого указывает стрелка - ПОБЕЖДАЕТ
                 showResultPopup('Победитель!', `🎉 ${result.name} 🎉`, 'Поздравляем с победой!');
-                isSpinning = false; // Позволяем крутить снова
+                isSpinning = false; 
             
             } else if (gameMode === 'elimination') {
-                // В "На выбывание" тот, на кого указывает стрелка - ПРОИГРЫВАЕТ (выбывает)
-                
                 if (participants.length > 2) {
                     showResultPopup('Выбывает...', `👎 ${result.name} 👎`, 'В следующий раз повезёт больше!');
                     
@@ -481,12 +495,13 @@
                             setTimeout(() => { 
                                 participants.splice(indexToRemove, 1);
                                 updateParticipantsCardsList();
-                                drawWheel(); // Перерисовываем с новой инвертированной логикой
+                                drawWheel(); 
                                 isSpinning = false; 
                             }, 500);
                         }
                     } else if (ws && ws.readyState === WebSocket.OPEN) {
                        ws.send(JSON.stringify({ type: 'eliminate_participant', data: { name: result.name } }));
+                       // Сервер пришлет 'update_state', который разблокирует кнопку
                     }
 
                 } else { 
@@ -510,8 +525,8 @@
             }
         }
         
-        // ... (show/hide popup) ...
         function showResultPopup(title, name, subtitle) {
+            // ... (Без изменений) ...
             popupTitle.textContent = title;
             popupName.textContent = name;
             popupSubtitle.textContent = subtitle;
@@ -520,12 +535,13 @@
         }
 
         function hideResultPopup() {
+            // ... (Без изменений) ...
             resultPopup.querySelector('div').classList.add('scale-95', 'opacity-0');
             setTimeout(() => resultPopup.classList.add('hidden'), 300);
         }
 
         function connectToBackend() {
-            // ... (Без изменений)
+            // ... (Без изменений) ...
             if (backendUrl.startsWith('WSS_URL')) {
                 console.error("Необходимо указать URL сервера Glitch!");
                 connectionStatus.innerHTML = '⚠️ Офлайн-тест'; 
@@ -555,7 +571,6 @@
                 const message = JSON.parse(event.data);
                 if (message.type === 'update_state') {
                     participants = message.participants;
-                    // [ИЗМЕНЕНО] totalBet не приходит от сервера (он считается на клиенте)
                     isSpinning = message.isSpinning || false; 
                     updateParticipantsCardsList();
                     drawWheel();
@@ -581,13 +596,11 @@
             };
         }
 
-        // ... (слушатели кнопок addParticipantBtn, betInput, spinBtn, closePopupBtn) ...
         addParticipantBtn.addEventListener('click', handleAddManualParticipant);
         betInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleAddManualParticipant(); });
         spinBtn.addEventListener('click', spin);
         closePopupBtn.addEventListener('click', hideResultPopup);
         
-        // [НОВЫЙ КОД] Слушатель для кнопки "Удалить всех"
         clearAllBtn.addEventListener('click', () => {
              if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(JSON.stringify({ type: 'clear_participants' }));
@@ -613,13 +626,11 @@
         });
 
         addModeToggle.addEventListener('change', () => {
-            // ... (Без изменений)
             manualControls.classList.toggle('hidden');
             autoControls.classList.toggle('hidden');
         });
 
         gameModeToggle.addEventListener('change', () => {
-            // ... (Без изменений, но теперь этот фикс работает правильно)
             gameMode = gameModeToggle.checked ? 'elimination' : 'classic';
             isSpinning = false;
             spinBtn.disabled = participants.length < 2;
@@ -627,7 +638,6 @@
         });
 
         loadVoiceParticipantsBtn.addEventListener('click', () => {
-            // ... (Без изменений)
             if (voiceChannelMembers.length === 0) return;
             
             if (ws && ws.readyState === WebSocket.OPEN) {
@@ -657,7 +667,6 @@
 
         const clientId = '1292015094247264307'; // <-- НЕ ЗАБУДЬ ПОМЕНЯТЬ НА СВОЙ
         async function setupDiscordSdk() {
-            // ... (Без изменений)
             const queryParams = new URLSearchParams(window.location.search);
             if (queryParams.get('frame_id') == null) return;
             const discordSdk = new DiscordSDK(clientId);
@@ -674,7 +683,6 @@
             }
         }
 
-        // ... (слушатель 'resize') ...
         let resizeTimer;
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimer);
